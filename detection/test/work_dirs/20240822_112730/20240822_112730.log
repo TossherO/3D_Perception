@@ -1,0 +1,1214 @@
+2024/08/22 11:27:30 - mmengine - INFO - 
+------------------------------------------------------------
+System environment:
+    sys.platform: linux
+    Python: 3.8.19 (default, Mar 20 2024, 19:58:24) [GCC 11.2.0]
+    CUDA available: True
+    MUSA available: False
+    numpy_random_seed: 2105533735
+    GPU 0: NVIDIA GeForce RTX 3060
+    CUDA_HOME: /usr/local/cuda-12.2
+    NVCC: Cuda compilation tools, release 12.2, V12.2.140
+    GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0
+    PyTorch: 2.3.1+cu121
+    PyTorch compiling details: PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201703
+  - Intel(R) oneAPI Math Kernel Library Version 2022.2-Product Build 20220804 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v3.3.6 (Git Hash 86e6af5974177e513fd3fee58425e1063e7f1361)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 12.1
+  - NVCC architecture flags: -gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_90,code=sm_90
+  - CuDNN 8.9.7  (built against CUDA 12.2)
+    - Built with CuDNN 8.9.2
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=12.1, CUDNN_VERSION=8.9.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -D_GLIBCXX_USE_CXX11_ABI=0 -fabi-version=11 -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOROCTRACER -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wsuggest-override -Wno-psabi -Wno-error=pedantic -Wno-error=old-style-cast -Wno-missing-braces -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=2.3.1, USE_CUDA=ON, USE_CUDNN=ON, USE_CUSPARSELT=1, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_GLOO=ON, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=1, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, USE_ROCM_KERNEL_ASSERT=OFF, 
+
+    TorchVision: 0.18.1+cu121
+    OpenCV: 4.10.0
+    MMEngine: 0.10.4
+
+Runtime environment:
+    cudnn_benchmark: False
+    mp_cfg: {'mp_start_method': 'fork', 'opencv_num_threads': 0}
+    dist_cfg: {'backend': 'nccl'}
+    seed: 2105533735
+    Distributed launcher: none
+    Distributed training: False
+    GPU number: 1
+------------------------------------------------------------
+
+2024/08/22 11:27:31 - mmengine - INFO - Config:
+auto_scale_lr = dict(base_batch_size=16, enable=False)
+backend_args = None
+class_names = [
+    'Pedestrian',
+    'Bike',
+]
+custom_imports = dict(
+    allow_failed_imports=False,
+    imports=[
+        'my_projects.CMT.cmt',
+        'my_projects.datasets',
+    ])
+data_prefix = dict(img='', pts='', sweeps='')
+data_root = 'data/CODA/'
+dataset_type = 'CodaDataset'
+default_hooks = dict(
+    changestrategy=dict(
+        change_epoch=[
+            -1,
+            -1,
+        ],
+        change_strategy=[
+            'remove_GTSample',
+            'remove_DN',
+        ],
+        type='ChangeStrategyHook'),
+    checkpoint=dict(interval=1, type='CheckpointHook'),
+    logger=dict(interval=50, type='LoggerHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='Det3DVisualizationHook'))
+default_scope = 'mmdet3d'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+ida_aug_conf = dict(
+    H=1024,
+    W=1224,
+    bot_pct_lim=(
+        0.0,
+        0.0,
+    ),
+    final_dim=(
+        640,
+        800,
+    ),
+    rand_flip=True,
+    resize_lim=(
+        0.5,
+        0.625,
+    ),
+    rot_lim=(
+        0.0,
+        0.0,
+    ))
+img_norm_cfg = dict(
+    mean=[
+        103.53,
+        116.28,
+        123.675,
+    ],
+    std=[
+        57.375,
+        57.12,
+        58.395,
+    ],
+    to_rgb=False)
+input_modality = dict(use_camera=True, use_lidar=True)
+load_from = 'ckpts/pretrain/nuim_r50.pth'
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
+lr = 0.00014
+metainfo = dict(classes=[
+    'Pedestrian',
+    'Bike',
+])
+model = dict(
+    data_preprocessor=dict(bgr_to_rgb=False, type='Det3DDataPreprocessor'),
+    img_backbone=dict(
+        depth=50,
+        frozen_stages=-1,
+        norm_cfg=dict(requires_grad=True, type='BN'),
+        norm_eval=True,
+        num_stages=4,
+        out_indices=(
+            2,
+            3,
+        ),
+        style='pytorch',
+        type='ResNet',
+        with_cp=True),
+    img_neck=dict(
+        in_channels=[
+            1024,
+            2048,
+        ], num_outs=2, out_channels=256, type='CPFPN'),
+    pts_backbone=dict(
+        conv_cfg=dict(bias=False, type='Conv2d'),
+        in_channels=256,
+        layer_nums=[
+            5,
+            5,
+        ],
+        layer_strides=[
+            1,
+            2,
+        ],
+        norm_cfg=dict(eps=0.001, momentum=0.01, type='BN'),
+        out_channels=[
+            128,
+            256,
+        ],
+        type='SECOND'),
+    pts_bbox_head=dict(
+        bbox_coder=dict(
+            max_num=100,
+            nms_radius=None,
+            num_classes=2,
+            pc_range=[
+                -21.0,
+                -21.0,
+                -2.0,
+                21.0,
+                21.0,
+                6.0,
+            ],
+            post_center_range=[
+                -30.0,
+                -30.0,
+                -5.0,
+                30.0,
+                30.0,
+                10.0,
+            ],
+            score_threshold=0.1,
+            type='NMSFreeBBoxCoder',
+            voxel_size=[
+                0.075,
+                0.075,
+                0.2,
+            ]),
+        common_heads=dict(
+            center=(
+                2,
+                2,
+            ), dim=(
+                3,
+                2,
+            ), height=(
+                1,
+                2,
+            ), rot=(
+                2,
+                2,
+            )),
+        downsample_scale=8,
+        hidden_dim=256,
+        in_channels=512,
+        loss_bbox=dict(
+            loss_weight=0.25, reduction='mean', type='mmdet.L1Loss'),
+        loss_cls=dict(
+            alpha=0.25,
+            gamma=2,
+            loss_weight=2.0,
+            reduction='mean',
+            type='mmdet.FocalLoss',
+            use_sigmoid=True),
+        loss_heatmap=dict(
+            loss_weight=1.0, reduction='mean', type='mmdet.GaussianFocalLoss'),
+        separate_head=dict(
+            final_kernel=1, init_bias=-2.19, type='SeparateTaskHead'),
+        task=dict(class_names=[
+            'Pedestrian',
+            'Bike',
+        ], num_class=2),
+        transformer=dict(
+            decoder=dict(
+                num_layers=6,
+                return_intermediate=True,
+                transformerlayers=dict(
+                    attn_cfgs=[
+                        dict(
+                            dropout=0.1,
+                            embed_dims=256,
+                            num_heads=8,
+                            type='MultiheadAttention'),
+                        dict(
+                            dropout=0.1,
+                            embed_dims=256,
+                            num_heads=8,
+                            type='PETRMultiheadFlashAttention'),
+                    ],
+                    feedforward_channels=1024,
+                    ffn_cfgs=dict(
+                        act_cfg=dict(inplace=True, type='ReLU'),
+                        embed_dims=256,
+                        feedforward_channels=1024,
+                        ffn_drop=0.0,
+                        num_fcs=2,
+                        type='FFN'),
+                    operation_order=(
+                        'self_attn',
+                        'norm',
+                        'cross_attn',
+                        'norm',
+                        'ffn',
+                        'norm',
+                    ),
+                    type='PETRTransformerDecoderLayer',
+                    with_cp=False),
+                type='PETRTransformerDecoder'),
+            type='CmtTransformer'),
+        type='CmtHead'),
+    pts_middle_encoder=dict(
+        block_type='basicblock',
+        encoder_channels=(
+            (
+                16,
+                16,
+                32,
+            ),
+            (
+                32,
+                32,
+                64,
+            ),
+            (
+                64,
+                64,
+                128,
+            ),
+            (
+                128,
+                128,
+            ),
+        ),
+        encoder_paddings=(
+            (
+                0,
+                0,
+                1,
+            ),
+            (
+                0,
+                0,
+                1,
+            ),
+            (
+                0,
+                0,
+                [
+                    0,
+                    1,
+                    1,
+                ],
+            ),
+            (
+                0,
+                0,
+            ),
+        ),
+        in_channels=4,
+        order=(
+            'conv',
+            'norm',
+            'act',
+        ),
+        output_channels=128,
+        sparse_shape=[
+            41,
+            560,
+            560,
+        ],
+        type='SparseEncoder'),
+    pts_neck=dict(
+        in_channels=[
+            128,
+            256,
+        ],
+        norm_cfg=dict(eps=0.001, momentum=0.01, type='BN'),
+        out_channels=[
+            256,
+            256,
+        ],
+        type='SECONDFPN',
+        upsample_cfg=dict(bias=False, type='deconv'),
+        upsample_strides=[
+            1,
+            2,
+        ],
+        use_conv_for_no_stride=True),
+    pts_voxel_encoder=dict(num_features=4, type='HardSimpleVFE'),
+    pts_voxel_layer=dict(
+        max_num_points=10,
+        max_voxels=(
+            120000,
+            160000,
+        ),
+        num_point_features=4,
+        point_cloud_range=[
+            -21.0,
+            -21.0,
+            -2.0,
+            21.0,
+            21.0,
+            6.0,
+        ],
+        voxel_size=[
+            0.075,
+            0.075,
+            0.2,
+        ]),
+    train_cfg=dict(
+        pts=dict(
+            assigner=dict(
+                cls_cost=dict(type='FocalLossCost', weight=2.0),
+                code_weights=[
+                    2.0,
+                    2.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                ],
+                iou_cost=dict(type='IoUCost', weight=0.0),
+                pc_range=[
+                    -21.0,
+                    -21.0,
+                    -2.0,
+                    21.0,
+                    21.0,
+                    6.0,
+                ],
+                reg_cost=dict(type='BBox3DL1Cost', weight=0.25),
+                type='HungarianAssigner3D'),
+            code_weights=[
+                2.0,
+                2.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+            ],
+            gaussian_overlap=0.1,
+            grid_size=[
+                560,
+                560,
+                40,
+            ],
+            min_radius=2,
+            out_size_factor=8,
+            point_cloud_range=[
+                -21.0,
+                -21.0,
+                -2.0,
+                21.0,
+                21.0,
+                6.0,
+            ],
+            pos_weight=-1,
+            voxel_size=[
+                0.075,
+                0.075,
+                0.2,
+            ])),
+    type='CmtDetector',
+    use_grid_mask=True)
+optim_wrapper = dict(
+    clip_grad=dict(max_norm=35, norm_type=2),
+    optimizer=dict(lr=0.00014, type='AdamW', weight_decay=0.01),
+    paramwise_cfg=dict(
+        custom_keys=dict(
+            img_backbone=dict(decay_mult=5, lr_mult=0.01),
+            img_neck=dict(lr_mult=0.1))),
+    type='OptimWrapper')
+out_size_factor = 8
+param_scheduler = [
+    dict(
+        T_max=8,
+        begin=0,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=8,
+        eta_min=0.0013999999999999998,
+        type='CosineAnnealingLR'),
+    dict(
+        T_max=12,
+        begin=8,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=20,
+        eta_min=1.4e-08,
+        type='CosineAnnealingLR'),
+    dict(
+        T_max=8,
+        begin=0,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=8,
+        eta_min=0.8947368421052632,
+        type='CosineAnnealingMomentum'),
+    dict(
+        T_max=12,
+        begin=8,
+        by_epoch=True,
+        convert_to_iter_based=True,
+        end=20,
+        eta_min=1,
+        type='CosineAnnealingMomentum'),
+]
+point_cloud_range = [
+    -21.0,
+    -21.0,
+    -2.0,
+    21.0,
+    21.0,
+    6.0,
+]
+resume = False
+test_cfg = dict()
+test_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='coda_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='LiDAR',
+        data_prefix=dict(img='', pts='', sweeps=''),
+        data_root='data/CODA/',
+        metainfo=dict(classes=[
+            'Pedestrian',
+            'Bike',
+        ]),
+        modality=dict(use_camera=True, use_lidar=True),
+        pipeline=[
+            dict(
+                coord_type='LIDAR',
+                load_dim=4,
+                type='LoadPointsFromFile',
+                use_dim=[
+                    0,
+                    1,
+                    2,
+                    3,
+                ]),
+            dict(
+                backend_args=None,
+                color_type='color',
+                num_views=2,
+                to_float32=True,
+                type='LoadMultiViewImageFromFilesNus'),
+            dict(
+                point_cloud_range=[
+                    -21.0,
+                    -21.0,
+                    -2.0,
+                    21.0,
+                    21.0,
+                    6.0,
+                ],
+                type='PointsRangeFilter'),
+            dict(
+                flip=False,
+                img_scale=(
+                    1333,
+                    800,
+                ),
+                pts_scale_ratio=1,
+                transforms=[
+                    dict(
+                        rot_range=[
+                            0,
+                            0,
+                        ],
+                        scale_ratio_range=[
+                            1.0,
+                            1.0,
+                        ],
+                        translation_std=[
+                            0,
+                            0,
+                            0,
+                        ],
+                        type='GlobalRotScaleTrans'),
+                    dict(
+                        data_aug_conf=dict(
+                            H=1024,
+                            W=1224,
+                            bot_pct_lim=(
+                                0.0,
+                                0.0,
+                            ),
+                            final_dim=(
+                                640,
+                                800,
+                            ),
+                            rand_flip=True,
+                            resize_lim=(
+                                0.5,
+                                0.625,
+                            ),
+                            rot_lim=(
+                                0.0,
+                                0.0,
+                            )),
+                        training=False,
+                        type='ResizeCropFlipImage'),
+                    dict(
+                        mean=[
+                            103.53,
+                            116.28,
+                            123.675,
+                        ],
+                        std=[
+                            57.375,
+                            57.12,
+                            58.395,
+                        ],
+                        to_rgb=False,
+                        type='NormalizeMultiviewImage'),
+                    dict(size_divisor=32, type='PadMultiViewImage'),
+                ],
+                type='MultiScaleFlipAug3D'),
+            dict(keys=[
+                'points',
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='CodaDataset'),
+    drop_last=False,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+test_evaluator = dict(
+    ann_file='data/CODA/coda_infos_val.pkl',
+    backend_args=None,
+    data_root='data/CODA/',
+    metric='bbox',
+    type='NuScenesMetric')
+test_pipeline = [
+    dict(
+        coord_type='LIDAR',
+        load_dim=4,
+        type='LoadPointsFromFile',
+        use_dim=[
+            0,
+            1,
+            2,
+            3,
+        ]),
+    dict(
+        backend_args=None,
+        color_type='color',
+        num_views=2,
+        to_float32=True,
+        type='LoadMultiViewImageFromFilesNus'),
+    dict(
+        point_cloud_range=[
+            -21.0,
+            -21.0,
+            -2.0,
+            21.0,
+            21.0,
+            6.0,
+        ],
+        type='PointsRangeFilter'),
+    dict(
+        flip=False,
+        img_scale=(
+            1333,
+            800,
+        ),
+        pts_scale_ratio=1,
+        transforms=[
+            dict(
+                rot_range=[
+                    0,
+                    0,
+                ],
+                scale_ratio_range=[
+                    1.0,
+                    1.0,
+                ],
+                translation_std=[
+                    0,
+                    0,
+                    0,
+                ],
+                type='GlobalRotScaleTrans'),
+            dict(
+                data_aug_conf=dict(
+                    H=1024,
+                    W=1224,
+                    bot_pct_lim=(
+                        0.0,
+                        0.0,
+                    ),
+                    final_dim=(
+                        640,
+                        800,
+                    ),
+                    rand_flip=True,
+                    resize_lim=(
+                        0.5,
+                        0.625,
+                    ),
+                    rot_lim=(
+                        0.0,
+                        0.0,
+                    )),
+                training=False,
+                type='ResizeCropFlipImage'),
+            dict(
+                mean=[
+                    103.53,
+                    116.28,
+                    123.675,
+                ],
+                std=[
+                    57.375,
+                    57.12,
+                    58.395,
+                ],
+                to_rgb=False,
+                type='NormalizeMultiviewImage'),
+            dict(size_divisor=32, type='PadMultiViewImage'),
+        ],
+        type='MultiScaleFlipAug3D'),
+    dict(keys=[
+        'points',
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
+train_dataloader = dict(
+    batch_size=2,
+    dataset=dict(
+        dataset=dict(
+            ann_file='coda_infos_train.pkl',
+            box_type_3d='LiDAR',
+            data_prefix=dict(img='', pts='', sweeps=''),
+            data_root='data/CODA/',
+            metainfo=dict(classes=[
+                'Pedestrian',
+                'Bike',
+            ]),
+            modality=dict(use_camera=True, use_lidar=True),
+            pipeline=[
+                dict(
+                    coord_type='LIDAR',
+                    load_dim=4,
+                    type='LoadPointsFromFile',
+                    use_dim=[
+                        0,
+                        1,
+                        2,
+                        3,
+                    ]),
+                dict(
+                    backend_args=None,
+                    color_type='color',
+                    to_float32=True,
+                    type='LoadMultiViewImageFromFilesNus'),
+                dict(
+                    type='LoadAnnotations3D',
+                    with_bbox_3d=True,
+                    with_label_3d=True),
+                dict(mode='train', type='ModalMask3D'),
+                dict(
+                    rot_range=[
+                        -0.78539816,
+                        0.78539816,
+                    ],
+                    scale_ratio_range=[
+                        0.9,
+                        1.1,
+                    ],
+                    translation_std=[
+                        0.5,
+                        0.5,
+                        0.5,
+                    ],
+                    type='GlobalRotScaleTransAll'),
+                dict(
+                    flip_ratio_bev_horizontal=0.5,
+                    flip_ratio_bev_vertical=0.5,
+                    type='CustomRandomFlip3D'),
+                dict(
+                    point_cloud_range=[
+                        -21.0,
+                        -21.0,
+                        -2.0,
+                        21.0,
+                        21.0,
+                        6.0,
+                    ],
+                    type='PointsRangeFilter'),
+                dict(
+                    point_cloud_range=[
+                        -21.0,
+                        -21.0,
+                        -2.0,
+                        21.0,
+                        21.0,
+                        6.0,
+                    ],
+                    type='ObjectRangeFilter'),
+                dict(
+                    classes=[
+                        'Pedestrian',
+                        'Bike',
+                    ], type='ObjectNameFilter'),
+                dict(type='PointShuffle'),
+                dict(
+                    data_aug_conf=dict(
+                        H=1024,
+                        W=1224,
+                        bot_pct_lim=(
+                            0.0,
+                            0.0,
+                        ),
+                        final_dim=(
+                            640,
+                            800,
+                        ),
+                        rand_flip=True,
+                        resize_lim=(
+                            0.5,
+                            0.625,
+                        ),
+                        rot_lim=(
+                            0.0,
+                            0.0,
+                        )),
+                    training=True,
+                    type='ResizeCropFlipImage'),
+                dict(
+                    mean=[
+                        103.53,
+                        116.28,
+                        123.675,
+                    ],
+                    std=[
+                        57.375,
+                        57.12,
+                        58.395,
+                    ],
+                    to_rgb=False,
+                    type='NormalizeMultiviewImage'),
+                dict(size_divisor=32, type='PadMultiViewImage'),
+                dict(
+                    keys=[
+                        'points',
+                        'img',
+                        'gt_bboxes_3d',
+                        'gt_labels_3d',
+                    ],
+                    meta_keys=(
+                        'filename',
+                        'ori_shape',
+                        'img_shape',
+                        'lidar2img',
+                        'depth2img',
+                        'cam2img',
+                        'pad_shape',
+                        'scale_factor',
+                        'flip',
+                        'pcd_horizontal_flip',
+                        'pcd_vertical_flip',
+                        'box_mode_3d',
+                        'box_type_3d',
+                        'img_norm_cfg',
+                        'pcd_trans',
+                        'sample_idx',
+                        'pcd_scale_factor',
+                        'pcd_rotation',
+                        'pts_filename',
+                        'transformation_3d_flow',
+                        'rot_degree',
+                        'gt_bboxes_3d',
+                        'gt_labels_3d',
+                    ),
+                    type='Pack3DDetInputs'),
+            ],
+            test_mode=False,
+            type='CodaDataset',
+            use_valid_flag=True),
+        type='CBGSDataset'),
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(shuffle=True, type='DefaultSampler'))
+train_pipeline = [
+    dict(
+        coord_type='LIDAR',
+        load_dim=4,
+        type='LoadPointsFromFile',
+        use_dim=[
+            0,
+            1,
+            2,
+            3,
+        ]),
+    dict(
+        backend_args=None,
+        color_type='color',
+        to_float32=True,
+        type='LoadMultiViewImageFromFilesNus'),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(mode='train', type='ModalMask3D'),
+    dict(
+        rot_range=[
+            -0.78539816,
+            0.78539816,
+        ],
+        scale_ratio_range=[
+            0.9,
+            1.1,
+        ],
+        translation_std=[
+            0.5,
+            0.5,
+            0.5,
+        ],
+        type='GlobalRotScaleTransAll'),
+    dict(
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5,
+        type='CustomRandomFlip3D'),
+    dict(
+        point_cloud_range=[
+            -21.0,
+            -21.0,
+            -2.0,
+            21.0,
+            21.0,
+            6.0,
+        ],
+        type='PointsRangeFilter'),
+    dict(
+        point_cloud_range=[
+            -21.0,
+            -21.0,
+            -2.0,
+            21.0,
+            21.0,
+            6.0,
+        ],
+        type='ObjectRangeFilter'),
+    dict(classes=[
+        'Pedestrian',
+        'Bike',
+    ], type='ObjectNameFilter'),
+    dict(type='PointShuffle'),
+    dict(
+        data_aug_conf=dict(
+            H=1024,
+            W=1224,
+            bot_pct_lim=(
+                0.0,
+                0.0,
+            ),
+            final_dim=(
+                640,
+                800,
+            ),
+            rand_flip=True,
+            resize_lim=(
+                0.5,
+                0.625,
+            ),
+            rot_lim=(
+                0.0,
+                0.0,
+            )),
+        training=True,
+        type='ResizeCropFlipImage'),
+    dict(
+        mean=[
+            103.53,
+            116.28,
+            123.675,
+        ],
+        std=[
+            57.375,
+            57.12,
+            58.395,
+        ],
+        to_rgb=False,
+        type='NormalizeMultiviewImage'),
+    dict(size_divisor=32, type='PadMultiViewImage'),
+    dict(
+        keys=[
+            'points',
+            'img',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+        ],
+        meta_keys=(
+            'filename',
+            'ori_shape',
+            'img_shape',
+            'lidar2img',
+            'depth2img',
+            'cam2img',
+            'pad_shape',
+            'scale_factor',
+            'flip',
+            'pcd_horizontal_flip',
+            'pcd_vertical_flip',
+            'box_mode_3d',
+            'box_type_3d',
+            'img_norm_cfg',
+            'pcd_trans',
+            'sample_idx',
+            'pcd_scale_factor',
+            'pcd_rotation',
+            'pts_filename',
+            'transformation_3d_flow',
+            'rot_degree',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+        ),
+        type='Pack3DDetInputs'),
+]
+val_cfg = dict()
+val_dataloader = dict(
+    batch_size=2,
+    dataset=dict(
+        ann_file='coda_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='LiDAR',
+        data_prefix=dict(img='', pts='', sweeps=''),
+        data_root='data/CODA/',
+        metainfo=dict(classes=[
+            'Pedestrian',
+            'Bike',
+        ]),
+        modality=dict(use_camera=True, use_lidar=True),
+        pipeline=[
+            dict(
+                coord_type='LIDAR',
+                load_dim=4,
+                type='LoadPointsFromFile',
+                use_dim=[
+                    0,
+                    1,
+                    2,
+                    3,
+                ]),
+            dict(
+                backend_args=None,
+                color_type='color',
+                num_views=2,
+                to_float32=True,
+                type='LoadMultiViewImageFromFilesNus'),
+            dict(
+                point_cloud_range=[
+                    -21.0,
+                    -21.0,
+                    -2.0,
+                    21.0,
+                    21.0,
+                    6.0,
+                ],
+                type='PointsRangeFilter'),
+            dict(
+                flip=False,
+                img_scale=(
+                    1333,
+                    800,
+                ),
+                pts_scale_ratio=1,
+                transforms=[
+                    dict(
+                        rot_range=[
+                            0,
+                            0,
+                        ],
+                        scale_ratio_range=[
+                            1.0,
+                            1.0,
+                        ],
+                        translation_std=[
+                            0,
+                            0,
+                            0,
+                        ],
+                        type='GlobalRotScaleTrans'),
+                    dict(
+                        data_aug_conf=dict(
+                            H=1024,
+                            W=1224,
+                            bot_pct_lim=(
+                                0.0,
+                                0.0,
+                            ),
+                            final_dim=(
+                                640,
+                                800,
+                            ),
+                            rand_flip=True,
+                            resize_lim=(
+                                0.5,
+                                0.625,
+                            ),
+                            rot_lim=(
+                                0.0,
+                                0.0,
+                            )),
+                        training=False,
+                        type='ResizeCropFlipImage'),
+                    dict(
+                        mean=[
+                            103.53,
+                            116.28,
+                            123.675,
+                        ],
+                        std=[
+                            57.375,
+                            57.12,
+                            58.395,
+                        ],
+                        to_rgb=False,
+                        type='NormalizeMultiviewImage'),
+                    dict(size_divisor=32, type='PadMultiViewImage'),
+                ],
+                type='MultiScaleFlipAug3D'),
+            dict(keys=[
+                'points',
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='CodaDataset'),
+    drop_last=False,
+    num_workers=4,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+val_evaluator = dict(
+    ann_file='data/CODA/coda_infos_val.pkl',
+    backend_args=None,
+    data_root='data/CODA/',
+    metric='bbox',
+    type='NuScenesMetric')
+vis_backends = [
+    dict(type='LocalVisBackend'),
+]
+visualizer = dict(
+    name='visualizer',
+    type='Det3DLocalVisualizer',
+    vis_backends=[
+        dict(type='LocalVisBackend'),
+    ])
+voxel_size = [
+    0.075,
+    0.075,
+    0.2,
+]
+work_dir = '/media/hello/新加卷/ubuntu_code/My_Study/test/work_dirs'
+
+2024/08/22 11:27:33 - mmengine - INFO - Distributed training is not used, all SyncBatchNorm (SyncBN) layers in the model will be automatically reverted to BatchNormXd layers if they are used.
+2024/08/22 11:27:33 - mmengine - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+before_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) DistSamplerSeedHook                
+(NORMAL      ) ChangeStrategyHook                 
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) IterTimerHook                      
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_val_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_val_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_test_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_test_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_test_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_run:
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+2024/08/22 11:27:36 - mmengine - INFO - ------------------------------
+2024/08/22 11:27:36 - mmengine - INFO - The length of training dataset: 600
+2024/08/22 11:27:36 - mmengine - INFO - The number of instances per category in the dataset:
++------------+--------+
+| category   | number |
++------------+--------+
+| Pedestrian | 1198   |
+| Bike       | 1501   |
++------------+--------+
+2024/08/22 11:27:40 - mmengine - INFO - ------------------------------
+2024/08/22 11:27:40 - mmengine - INFO - The length of test dataset: 250
+2024/08/22 11:27:40 - mmengine - INFO - The number of instances per category in the dataset:
++------------+--------+
+| category   | number |
++------------+--------+
+| Pedestrian | 284    |
+| Bike       | 0      |
++------------+--------+
