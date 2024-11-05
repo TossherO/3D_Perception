@@ -9,71 +9,77 @@ from mmdet3d.structures.bbox_3d.cam_box3d import CameraInstance3DBoxes
 from mmdet3d.datasets import NuScenesDataset
 
 
+# BBOX_CLASS_TO_ID = {
+#     # Dynamic Classes
+#     "Car"                   : 0,
+#     "Pedestrian"            : 1,
+#     "Bike"                  : 2,
+#     "Motorcycle"            : 3,
+#     "Golf Cart"             : 4, # Unused
+#     "Truck"                 : 5, # Unused
+#     "Scooter"               : 6,
+#     # Static Classes
+#     "Tree"                  : 7,
+#     "Traffic Sign"          : 8,
+#     "Canopy"                : 9,
+#     "Traffic Light"         : 10,
+#     "Bike Rack"             : 11,
+#     "Bollard"               : 12,
+#     "Construction Barrier"  : 13, # Unused
+#     "Parking Kiosk"         : 14,
+#     "Mailbox"               : 15,
+#     "Fire Hydrant"          : 16,
+#     # Static Class Mixed
+#     "Freestanding Plant"    : 17,
+#     "Pole"                  : 18,
+#     "Informational Sign"    : 19,
+#     "Door"                  : 20,
+#     "Fence"                 : 21,
+#     "Railing"               : 22,
+#     "Cone"                  : 23,
+#     "Chair"                 : 24,
+#     "Bench"                 : 25,
+#     "Table"                 : 26,
+#     "Trash Can"             : 27,
+#     "Newspaper Dispenser"   : 28,
+#     # Static Classes Indoor
+#     "Room Label"            : 29,
+#     "Stanchion"             : 30,
+#     "Sanitizer Dispenser"   : 31,
+#     "Condiment Dispenser"   : 32,
+#     "Vending Machine"       : 33,
+#     "Emergency Aid Kit"     : 34,
+#     "Fire Extinguisher"     : 35,
+#     "Computer"              : 36,
+#     "Television"            : 37, # unused
+#     "Other"                 : 38,
+#     "Horse"                 : 39,
+#     # New Classes
+#     "Pickup Truck"          : 40,
+#     "Delivery Truck"        : 41,
+#     "Service Vehicle"       : 42,
+#     "Utility Vehicle"       : 43,
+#     "Fire Alarm"            : 44,
+#     "ATM"                   : 45,
+#     "Cart"                  : 46,
+#     "Couch"                 : 47,
+#     "Traffic Arm"           : 48,
+#     "Wall Sign"             : 49,
+#     "Floor Sign"            : 50,
+#     "Door Switch"           : 51,
+#     "Emergency Phone"       : 52,
+#     "Dumpster"              : 53,
+#     "Vacuum Cleaner"        : 54, # unused
+#     "Segway"                : 55,
+#     "Bus"                   : 56,
+#     "Skateboard"            : 57,
+#     "Water Fountain"        : 58
+# }
+
 BBOX_CLASS_TO_ID = {
-    # Dynamic Classes
     "Car"                   : 0,
     "Pedestrian"            : 1,
-    "Bike"                  : 2,
-    "Motorcycle"            : 3,
-    "Golf Cart"             : 4, # Unused
-    "Truck"                 : 5, # Unused
-    "Scooter"               : 6,
-    # Static Classes
-    "Tree"                  : 7,
-    "Traffic Sign"          : 8,
-    "Canopy"                : 9,
-    "Traffic Light"         : 10,
-    "Bike Rack"             : 11,
-    "Bollard"               : 12,
-    "Construction Barrier"  : 13, # Unused
-    "Parking Kiosk"         : 14,
-    "Mailbox"               : 15,
-    "Fire Hydrant"          : 16,
-    # Static Class Mixed
-    "Freestanding Plant"    : 17,
-    "Pole"                  : 18,
-    "Informational Sign"    : 19,
-    "Door"                  : 20,
-    "Fence"                 : 21,
-    "Railing"               : 22,
-    "Cone"                  : 23,
-    "Chair"                 : 24,
-    "Bench"                 : 25,
-    "Table"                 : 26,
-    "Trash Can"             : 27,
-    "Newspaper Dispenser"   : 28,
-    # Static Classes Indoor
-    "Room Label"            : 29,
-    "Stanchion"             : 30,
-    "Sanitizer Dispenser"   : 31,
-    "Condiment Dispenser"   : 32,
-    "Vending Machine"       : 33,
-    "Emergency Aid Kit"     : 34,
-    "Fire Extinguisher"     : 35,
-    "Computer"              : 36,
-    "Television"            : 37, # unused
-    "Other"                 : 38,
-    "Horse"                 : 39,
-    # New Classes
-    "Pickup Truck"          : 40,
-    "Delivery Truck"        : 41,
-    "Service Vehicle"       : 42,
-    "Utility Vehicle"       : 43,
-    "Fire Alarm"            : 44,
-    "ATM"                   : 45,
-    "Cart"                  : 46,
-    "Couch"                 : 47,
-    "Traffic Arm"           : 48,
-    "Wall Sign"             : 49,
-    "Floor Sign"            : 50,
-    "Door Switch"           : 51,
-    "Emergency Phone"       : 52,
-    "Dumpster"              : 53,
-    "Vacuum Cleaner"        : 54, # unused
-    "Segway"                : 55,
-    "Bus"                   : 56,
-    "Skateboard"            : 57,
-    "Water Fountain"        : 58
+    "Cyclist"               : 2
 }
 
 BBOX_ID_TO_COLOR = [ # BGR

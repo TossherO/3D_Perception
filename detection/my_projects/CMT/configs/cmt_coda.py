@@ -83,7 +83,7 @@ point_cloud_range = [-21.0, -21.0, -2.0, 21.0, 21.0, 6.0]
 #     "Traffic Arm", "Wall Sign", "Floor Sign", "Door Switch", "Emergency Phone", "Dumpster", "Vacuum Cleaner", #unused
 #     "Segway", "Bus", "Skateboard", "Water Fountain"
 # ]
-class_names = ['Car', 'Pedestrian', 'Bike']
+class_names = ['Car', 'Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
 dataset_type = 'CodaDataset'
 data_root = 'data/CODA/'

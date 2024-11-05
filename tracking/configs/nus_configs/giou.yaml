@@ -1,0 +1,21 @@
+running:
+  covariance: default
+  max_age_since_update: 3
+  min_hits_to_birth: 3
+  match_type: bipartite
+  asso: giou
+  motion_model: kf
+  score_threshold: 0.5
+  asso_thres:
+    iou: 0.9
+    giou: 1.5
+    diou: 1.2
+  score_threshold_second_stage: 
+    iou: 0.1
+    giou: 0.1
+    diou: 0.1
+  asso_thres_second_stage: 
+    iou: 0.1
+    giou: -0.5
+    diou: -0.2
+  has_velo: false
