@@ -7,7 +7,7 @@ from mmengine import load
 from mmengine.logging import MMLogger, print_log
 from mmengine.evaluator import BaseMetric
 from mmdet3d.registry import METRICS
-from coda_eval import kitti_eval
+from .coda_eval import kitti_eval
 
 @METRICS.register_module()
 class CodaMetric(BaseMetric):
@@ -151,13 +151,14 @@ class CodaMetric(BaseMetric):
                     'rotation_y': [],
                     'score': [],
                 }
-                for instance in annos['pred_instances_3d']:
-                    kitti_annos['name'].append(instance['name'])
+                num_instance = len(annos['pred_instances_3d']['scores_3d'])
+                for j in range(num_instance):
+                    kitti_annos['name'].append(annos['pred_instances_3d']['labels_3d'][j])
                     kitti_annos['occluded'].append('None')
-                    kitti_annos['dimensions'].append(instance['bboxes_3d'][:3])
-                    kitti_annos['location'].append(instance['bboxes_3d'][3:6])
-                    kitti_annos['rotation_y'].append(instance['bboxes_3d'][6])
-                    kitti_annos['score'].append(instance['scores_3d'])
+                    kitti_annos['location'].append(annos['pred_instances_3d']['bboxes_3d'][j][:3])
+                    kitti_annos['dimensions'].append(annos['pred_instances_3d']['bboxes_3d'][j][3:6])
+                    kitti_annos['rotation_y'].append(annos['pred_instances_3d']['bboxes_3d'][j][6])
+                    kitti_annos['score'].append(annos['pred_instances_3d']['scores_3d'][j])
                 for name in kitti_annos:
                     kitti_annos[name] = np.array(kitti_annos[name])
             kitti_annos['sample_idx'] = np.array([annos['sample_idx']] * len(annos['score']), dtype=np.int64)

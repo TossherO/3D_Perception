@@ -281,8 +281,7 @@ test_dataloader = dict(
 
 # evaluator
 val_evaluator = dict(
-    type='NuScenesMetric',
-    data_root=data_root,
+    type='CodaMetric',
     ann_file=data_root + 'coda_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
