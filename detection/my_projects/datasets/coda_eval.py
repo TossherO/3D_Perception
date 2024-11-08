@@ -32,7 +32,7 @@ def clean_data(gt_anno, dt_anno, current_class, difficulty):
     MIN_HEIGHT = [40, 25, 25]
     MAX_OCCLUSION = [0, 1, 2]
     MAX_TRUNCATION = [0.15, 0.3, 0.5]
-    ignored_gt, ignored_dt = [], [], []
+    ignored_gt, ignored_dt = [], []
     current_cls_name = CLASS_NAMES[current_class].lower()
     num_gt = len(gt_anno['name'])
     num_dt = len(dt_anno['name'])
@@ -223,9 +223,9 @@ def fused_compute_statistics(overlaps,
         for t, thresh in enumerate(thresholds):
             overlap = overlaps[dt_num:dt_num + dt_nums[i],
                                gt_num:gt_num + gt_nums[i]]
-            gt_size = gt_sizes[gt_num:gt_num + gt_nums[i]]
-            dt_size = dt_sizes[dt_num:dt_num + dt_nums[i]]
-            dt_scores = dt_scores_list[dt_num:dt_num + dt_nums[i]]
+            gt_size = gt_sizes[i]
+            dt_size = dt_sizes[i]
+            dt_scores = dt_scores_list[i]
             ignored_gt = ignored_gts[gt_num:gt_num + gt_nums[i]]
             ignored_det = ignored_dets[dt_num:dt_num + dt_nums[i]]
             tp, fp, fn, _ = compute_statistics_jit(
@@ -311,7 +311,7 @@ def _prepare_data(gt_annos, dt_annos, current_class, difficulty):
     gt_sizes = []
     dt_sizes = []
     dt_scores_list = []
-    ignored_gts, ignored_dets = [], [], []
+    ignored_gts, ignored_dets = [], []
     total_num_valid_gt = 0
     for i in range(len(gt_annos)):
         rets = clean_data(gt_annos[i], dt_annos[i], current_class, difficulty)

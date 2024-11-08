@@ -2,6 +2,7 @@ import os
 import random
 import json
 
+is_continous = True
 label_path = './data/CODA/3d_bbox/os1'
 label_dirs = os.listdir(label_path)
 
@@ -18,7 +19,7 @@ for label_dir in label_dirs:
     sequences = []
     sequence = [frames[0]]
     for i in range(1, len(frames)):
-        if frames[i] - frames[i-1] == 1:
+        if frames[i] - frames[i-1] == 1 or not is_continous:
             sequence.append(frames[i])
         else:
             sequences.append(sequence)

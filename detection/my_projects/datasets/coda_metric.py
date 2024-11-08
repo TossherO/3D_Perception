@@ -133,7 +133,8 @@ class CodaMetric(BaseMetric):
         """
         dt_annos = []
         for i, annos in enumerate(results):
-            if len(annos['pred_instances_3d']) == 0:
+            num_instance = len(annos['pred_instances_3d']['scores_3d'])
+            if num_instance == 0:
                 kitti_annos = {
                     'name': np.array([]),
                     'occluded': np.array([]),
@@ -151,17 +152,17 @@ class CodaMetric(BaseMetric):
                     'rotation_y': [],
                     'score': [],
                 }
-                num_instance = len(annos['pred_instances_3d']['scores_3d'])
                 for j in range(num_instance):
-                    kitti_annos['name'].append(annos['pred_instances_3d']['labels_3d'][j])
+                    label = annos['pred_instances_3d']['labels_3d'][j]
+                    kitti_annos['name'].append(self.classes[label])
                     kitti_annos['occluded'].append('None')
-                    kitti_annos['location'].append(annos['pred_instances_3d']['bboxes_3d'][j][:3])
-                    kitti_annos['dimensions'].append(annos['pred_instances_3d']['bboxes_3d'][j][3:6])
-                    kitti_annos['rotation_y'].append(annos['pred_instances_3d']['bboxes_3d'][j][6])
+                    kitti_annos['location'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][:3])
+                    kitti_annos['dimensions'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][3:6])
+                    kitti_annos['rotation_y'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][6])
                     kitti_annos['score'].append(annos['pred_instances_3d']['scores_3d'][j])
                 for name in kitti_annos:
                     kitti_annos[name] = np.array(kitti_annos[name])
-            kitti_annos['sample_idx'] = np.array([annos['sample_idx']] * len(annos['score']), dtype=np.int64)
+            kitti_annos['sample_idx'] = np.array([annos['sample_idx']] * len(kitti_annos['score']), dtype=np.int64)
             dt_annos.append(kitti_annos)
         return dt_annos
 
