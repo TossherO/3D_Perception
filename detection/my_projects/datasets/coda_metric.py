@@ -156,7 +156,9 @@ class CodaMetric(BaseMetric):
                     label = annos['pred_instances_3d']['labels_3d'][j]
                     kitti_annos['name'].append(self.classes[label])
                     kitti_annos['occluded'].append('None')
-                    kitti_annos['location'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][:3])
+                    location = annos['pred_instances_3d']['bboxes_3d'].tensor[j][:3]
+                    location[2] = location[2] + annos['pred_instances_3d']['bboxes_3d'].tensor[j][5] / 2
+                    kitti_annos['location'].append(location)
                     kitti_annos['dimensions'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][3:6])
                     kitti_annos['rotation_y'].append(annos['pred_instances_3d']['bboxes_3d'].tensor[j][6])
                     kitti_annos['score'].append(annos['pred_instances_3d']['scores_3d'][j])

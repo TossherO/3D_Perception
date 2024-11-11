@@ -92,9 +92,9 @@ def d3_box_overlap_kernel(boxes, qboxes, rinc, criterion=-1):
                 # iw = (min(boxes[i, 1] + boxes[i, 4], qboxes[j, 1] +
                 #         qboxes[j, 4]) - max(boxes[i, 1], qboxes[j, 1]))
                 iw = (
-                    min(boxes[i, 1], qboxes[j, 1]) -
-                    max(boxes[i, 1] - boxes[i, 4],
-                        qboxes[j, 1] - qboxes[j, 4]))
+                    min(boxes[i, 2], qboxes[j, 2]) -
+                    max(boxes[i, 2] - boxes[i, 5],
+                        qboxes[j, 2] - qboxes[j, 5]))
 
                 if iw > 0:
                     area1 = boxes[i, 3] * boxes[i, 4] * boxes[i, 5]
@@ -115,8 +115,8 @@ def d3_box_overlap_kernel(boxes, qboxes, rinc, criterion=-1):
 
 def d3_box_overlap(boxes, qboxes, criterion=-1):
     from .rotate_iou import rotate_iou_gpu_eval
-    rinc = rotate_iou_gpu_eval(boxes[:, [0, 2, 3, 5, 6]],
-                               qboxes[:, [0, 2, 3, 5, 6]], 2)
+    rinc = rotate_iou_gpu_eval(boxes[:, [0, 1, 3, 4, 6]],
+                               qboxes[:, [0, 1, 3, 4, 6]], 2)
     d3_box_overlap_kernel(boxes, qboxes, rinc, criterion)
     return rinc
 
