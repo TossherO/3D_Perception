@@ -24,10 +24,10 @@ visualizer2 = Det3DLocalVisualizer()
 visualizer3 = Det3DLocalVisualizer()
 
 # runner.train_dataloader.dataset.dataset.pipeline.transforms.pop(3)
-runner.load_checkpoint('ckpts/CMT/epoch_19.pth')
+runner.load_checkpoint('ckpts/CMT/epoch_39.pth')
 runner.model.eval()
 
-count = 10
+count = 192
 for data_batch in runner.test_dataloader:
     if count == 0:
         break
@@ -79,7 +79,7 @@ visualizer1.draw_bboxes_3d(bboxes_3d, bbox_color)
 
 visualizer2.set_image(img)
 visualizer2.draw_proj_bboxes_3d(bboxes_3d, input_meta)
-# print(img_metas[0]['img_path'])
+print(img_metas[0]['img_path'])
 
 visualizer3.set_points(point)
 visualizer3.draw_bboxes_3d(bboxes_3d_pre, bbox_color_pre)

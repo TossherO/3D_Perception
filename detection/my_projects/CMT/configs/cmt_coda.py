@@ -3,7 +3,7 @@ custom_imports = dict(
     imports=['my_projects.CMT.cmt', 'my_projects.datasets'], allow_failed_imports=False)
 
 # optimizer
-lr = 0.00014
+lr = 0.00014 / 4
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
@@ -20,18 +20,18 @@ param_scheduler = [
     # lr * 1e-4
     dict(
         type='CosineAnnealingLR',
-        T_max=8,
-        eta_min=lr * 10,
+        T_max=4,
+        eta_min=lr * 6,
         begin=0,
-        end=8,
+        end=4,
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
         type='CosineAnnealingLR',
-        T_max=12,
-        eta_min=lr * 1e-4,
-        begin=8,
-        end=20,
+        T_max=26,
+        eta_min=lr * 1e-3,
+        begin=4,
+        end=30,
         by_epoch=True,
         convert_to_iter_based=True),
     # momentum scheduler
@@ -39,24 +39,24 @@ param_scheduler = [
     # during the next 12 epochs, momentum increases from 0.85 / 0.95 to 1
     dict(
         type='CosineAnnealingMomentum',
-        T_max=8,
+        T_max=4,
         eta_min=0.85 / 0.95,
         begin=0,
-        end=8,
+        end=4,
         by_epoch=True,
         convert_to_iter_based=True),
     dict(
         type='CosineAnnealingMomentum',
-        T_max=12,
+        T_max=26,
         eta_min=1,
-        begin=8,
-        end=20,
+        begin=4,
+        end=30,
         by_epoch=True,
         convert_to_iter_based=True)
 ]
 
 # runtime settings
-train_cfg = dict(by_epoch=True, max_epochs=20, val_interval=5)
+train_cfg = dict(by_epoch=True, max_epochs=30, val_interval=1)
 val_cfg = dict()
 test_cfg = dict()
 auto_scale_lr = dict(enable=False, base_batch_size=16)
@@ -106,41 +106,27 @@ ida_aug_conf = {
         "W": 1224,
         "rand_flip": True,
     }
-# db_sampler=dict(
-#     type='UnifiedDataBaseSampler',
-#     data_root=data_root,
-#     info_path=data_root + 'coda_dbinfos_train.pkl',
-#     rate=1.0,
-#     prepare=dict(
-#         filter_by_difficulty=[-1],
-#         filter_by_min_points=dict(
-#             car=5,
-#             truck=5,
-#             bus=5,
-#             trailer=5,
-#             construction_vehicle=5,
-#             traffic_cone=5,
-#             barrier=5,
-#             motorcycle=5,
-#             bicycle=5,
-#             pedestrian=5)),
-#     classes=class_names,
-#     sample_groups=dict(
-#         car=2,
-#         truck=3,
-#         construction_vehicle=7,
-#         bus=4,
-#         trailer=6,
-#         barrier=2,
-#         motorcycle=6,
-#         bicycle=6,
-#         pedestrian=2,
-#         traffic_cone=2),
-#     points_loader=dict(
-#         type='LoadPointsFromFile',
-#         coord_type='LIDAR',
-#         load_dim=5,
-#         use_dim=[0, 1, 2, 3]))
+db_sampler=dict(
+    type='UnifiedDataBaseSampler',
+    data_root=data_root,
+    info_path=data_root + 'coda_dbinfos_train.pkl',
+    rate=1.0,
+    prepare=dict(
+        filter_by_difficulty=[-1],
+        filter_by_min_points=dict(
+            Car=5,
+            Pedestrian=5,
+            Cyclist=5)),
+    classes=class_names,
+    sample_groups=dict(
+            Car=3,
+            Pedestrian=2,
+            Cyclist=4),
+    points_loader=dict(
+        type='LoadPointsFromFile',
+        coord_type='LIDAR',
+        load_dim=4,
+        use_dim=[0, 1, 2, 3]))
 
 # pipeline
 train_pipeline = [
@@ -157,13 +143,13 @@ train_pipeline = [
         backend_args=backend_args
     ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    # dict(
-    #     type='UnifiedObjectSample',
-    #     sample_2d=True,
-    #     mixup_rate=0.5,
-    #     db_sampler=db_sampler
-    # ),
-    dict(type='ModalMask3D', mode='train'),
+    dict(
+        type='UnifiedObjectSample',
+        sample_2d=True,
+        mixup_rate=0.5,
+        db_sampler=db_sampler
+    ),
+    # dict(type='ModalMask3D', mode='train'),
     dict(
         type='GlobalRotScaleTransAll',
         scale_ratio_range=[0.9, 1.1],
@@ -352,6 +338,7 @@ model = dict(
         use_conv_for_no_stride=True),
     pts_bbox_head=dict(
         type='CmtHead',
+        num_query=500,
         in_channels=512,
         hidden_dim=256,
         downsample_scale=8,
@@ -432,7 +419,7 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=1),
     changestrategy=dict(
         type='ChangeStrategyHook',
-        change_epoch=[-1, -1, -1],
+        change_epoch=[16, 26, -1],
         change_strategy=['remove_GTSample', 'remove_DN', 'change_layers_loss_weight'],
         change_args=[None, None, None])
     )

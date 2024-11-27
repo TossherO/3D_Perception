@@ -75,8 +75,17 @@ import mmengine
 
 BBOX_CLASS_REMAP = {
     "Car": "Car",
+    "Service Vehicle": "Car",
+    "Pickup Truck": "Car",
+    "Utility Vehicle": "Car",
+    "Delivery Truck": "Car",
+    "Bus": "Car",
     "Pedestrian": "Pedestrian",
     "Bike": "Cyclist",
+    "Scooter": "Cyclist",
+    "Motorcycle": "Cyclist",
+    "Skateboard": "Cyclist",
+    "Segway": "Cyclist"
 }
 
 BBOX_CLASS_TO_ID = {
@@ -146,6 +155,8 @@ def create_coda_infos_split(root_path,
                     continue
                 instance = {}
                 instance['bbox_label_3d'] = BBOX_CLASS_TO_ID[BBOX_CLASS_REMAP[bbox['classId']]]
+                if instance['bbox_label_3d'] == 2 and bbox['h'] < 1.5:
+                    continue
                 instance['bbox_3d'] = [bbox['cX'], bbox['cY'], bbox['cZ'], bbox['l'], bbox['w'], bbox['h'], bbox['y']]
                 instance['is_occluded'] = bbox['labelAttributes']['isOccluded']
                 instance['instance_id'] = bbox['instanceId']
