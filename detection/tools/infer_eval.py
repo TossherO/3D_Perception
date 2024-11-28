@@ -32,7 +32,7 @@ with torch.no_grad():
         else:
             raise TypeError()
         sample_idxs.append(outputs[0].get('sample_idx'))
-        bboxes = outputs[0].get('pred_instances_3d')['bboxes_3d'].tensor.numpy()
+        bboxes = outputs[0].get('pred_instances_3d')['bboxes_3d'].tensor.numpy().copy()
         bboxes[:, 2] = bboxes[:, 2] + bboxes[:, 5] / 2
         pre_bboxes.append(bboxes)
         pre_labels.append(outputs[0].get('pred_instances_3d')['labels_3d'].numpy())
