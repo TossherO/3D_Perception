@@ -8,17 +8,17 @@ class Tracklet:
     def __init__(self, configs, id, bbox: BBox, det_type, frame_index, time_stamp=None):
         self.id = id
         self.time_stamp = time_stamp
-        self.asso = configs['running']['asso']
+        self.asso = configs['asso']
         
         self.configs = configs
         self.det_type = det_type
         
         # initialize different types of motion model
-        self.motion_model_type = configs['running']['motion_model']
+        self.motion_model_type = configs['motion_model']
         # simple kalman filter
         if self.motion_model_type == 'kf':
             self.motion_model = motion_model.KalmanFilterMotionModel(
-                bbox=bbox, inst_type=self.det_type, time_stamp=time_stamp, covariance=configs['running']['covariance'])
+                bbox=bbox, inst_type=self.det_type, time_stamp=time_stamp, covariance=configs['covariance'])
 
         # life and death management
         self.life_manager = life_manager.HitManager(configs, frame_index)

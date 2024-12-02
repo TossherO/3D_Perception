@@ -18,8 +18,8 @@ class HitManager:
         self.age = 0
         self.recent_state = None
 
-        self.max_age = configs['running']['max_age_since_update']
-        self.min_hits = configs['running']['min_hits_to_birth']
+        self.max_age = configs['max_age_since_update']
+        self.min_hits = configs['min_hits_to_birth']
 
         self.state = 'birth'
         self.recent_state = 1

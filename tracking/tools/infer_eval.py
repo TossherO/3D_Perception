@@ -58,22 +58,17 @@ def iou_rotated_2d(box3d1, box3d2):
 
 data_info = mmengine.load('./data/CODA/coda_infos_val.pkl')
 detection_results = mmengine.load('./data/CODA/detection_results.pkl')
-config_path = './configs/nus_configs/diou.yaml'
+config_path = './configs/coda_configs/diou.yaml'
 save_path = './work_dirs/' + time.strftime('%Y%m%d%H%M%S', time.localtime()) + '/'
 configs = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)
 point_cloud_range = [-21.0, -21.0, -2.0, 21.0, 21.0, 6.0]
-
-scene = -1
-frame = -1
-all_results = []
-sequence_results = None
-track_labels = [1, 2]
 
 # infer
 scene = -1
 frame = -1
 all_results = []
 labels = [0, 1, 2]
+class_names = ['car', 'pedestrian', 'cyclist']
 trackers = [None for _ in labels]
 sequence_results = None
 
@@ -86,7 +81,7 @@ for i, data in enumerate(data_info['data_list']):
         scene = data['scene']
         frame = data['frame']
         print('Processing scene %s start from frame %s' % (scene, frame))
-        trackers = [MOTModel(configs) for _ in labels]
+        trackers = [MOTModel(configs, class_names[label]) for label in labels]
         sequence_results = {'token': data['token'], 'data_list': [[] for _ in labels]}
     
     scene = data['scene']

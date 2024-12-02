@@ -147,7 +147,7 @@ def associate_unmatched_trks(dets, pred_bboxes, asso, dist_threshold):
     dets = torch.tensor(np.array([BBox.bbox2array(det, return_score=False) for det in dets]), dtype=torch.float32, device=gpu_device)
     tracks = torch.tensor(np.array([BBox.bbox2array(trk, return_score=False) for trk in pred_bboxes]), dtype=torch.float32, device=gpu_device)
     if len(dets) == 0 or len(tracks) == 0:
-        return np.zeros((len(dets), len(tracks)))
+        return [0] * len(pred_bboxes)
     dets = dets.unsqueeze(1).repeat(1, len(tracks), 1)
     tracks = tracks.unsqueeze(0).repeat(len(dets), 1, 1)
     if asso == 'iou':

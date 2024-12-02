@@ -6,23 +6,28 @@ import torch
 
 
 class MOTModel:
-    def __init__(self, configs):
+    def __init__(self, configs, class_name):
         self.trackers = list()         # tracker for each single tracklet
         self.frame_count = 0           # record for the frames
         self.count = 0                 # record the obj number to assign ids
         self.time_stamp = None         # the previous time stamp
 
-        self.configs = configs
-        self.match_type = configs['running']['match_type']
-        self.asso = configs['running']['asso']
-        self.score_threshold = configs['running']['score_threshold']
-        self.asso_thres = configs['running']['asso_thres'][self.asso]
-        self.score_threshold_second_stage = configs['running']['score_threshold_second_stage'][self.asso]
-        self.asso_thres_second_stage = configs['running']['asso_thres_second_stage'][self.asso]
-        self.motion_model = configs['running']['motion_model']
+        general_configs = configs['general']
+        class_specific_configs = configs['class_specific'].get(class_name)
+        if class_specific_configs != 'None':
+            for key in class_specific_configs:
+                general_configs[key] = class_specific_configs[key]
 
-        self.max_age = configs['running']['max_age_since_update']
-        self.min_hits = configs['running']['min_hits_to_birth']
+        self.match_type = general_configs['match_type']
+        self.asso = general_configs['asso']
+        self.score_threshold = general_configs['score_threshold']
+        self.asso_thres = general_configs['asso_thres'][self.asso]
+        self.score_threshold_second_stage = general_configs['score_threshold_second_stage'][self.asso]
+        self.asso_thres_second_stage = general_configs['asso_thres_second_stage'][self.asso]
+        self.motion_model = general_configs['motion_model']
+        self.max_age = general_configs['max_age_since_update']
+        self.min_hits = general_configs['min_hits_to_birth']
+        self.configs = general_configs
 
     
     def frame_mot(self, input_data: FrameData):
