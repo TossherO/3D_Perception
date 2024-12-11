@@ -121,7 +121,7 @@ iou_shreshold = [0.7, 0.5, 0.5]
 
 for results in all_results:
     print('Processing %s' % results['token'])
-    for i in labels:
+    for i, label in enumerate(labels):
         class_results = results['data_list'][i]
         tracks = {}
         tp = 0
@@ -156,7 +156,7 @@ for results in all_results:
                 matched_ids = np.zeros(len(gt_bboxes), dtype=int) - 1
                 for k in range(len(track_bboxes)):
                     max_iou, max_idx = torch.max(iou_matrix[k], 0)
-                    if max_iou > iou_shreshold[i]:
+                    if max_iou > iou_shreshold[label]:
                         matched_ids[max_idx] = track_ids[k]
                         iou_matrix[:, max_idx] = 0
                         tp += 1
@@ -199,12 +199,12 @@ for results in all_results:
         ml_list[i].append(ml)
 
 # 计算MOTA、MT、ML
-for i in labels:
+for i, label in enumerate(labels):
     mota = 1 - (sum(fp_list[i]) + sum(fn_list[i]) + sum(id_switch_list[i])) / (sum(tp_list[i]) + sum(fn_list[i]))
     mt = sum(mt_list[i]) / sum(tracks_num_list[i])
     ml = sum(ml_list[i]) / sum(tracks_num_list[i])
-    print('Label %d: MOTA: %.4f, MT: %.4f, ML: %.4f' % (i, mota, mt, ml))
+    print('Label %d: MOTA: %.4f, MT: %.4f, ML: %.4f' % (label, mota, mt, ml))
     print('TP: %d, FP: %d, FN: %d, ID Switch: %d' % (sum(tp_list[i]), sum(fp_list[i]), sum(fn_list[i]), sum(id_switch_list[i])))
     with open(save_path + 'coda_track_eval_results.log', 'a') as f:
-        f.write('Label %d: MOTA: %.4f, MT: %.4f, ML: %.4f\n' % (i, mota, mt, ml))
+        f.write('Label %d: MOTA: %.4f, MT: %.4f, ML: %.4f\n' % (label, mota, mt, ml))
         f.write('TP: %d, FP: %d, FN: %d, ID Switch: %d\n' % (sum(tp_list[i]), sum(fp_list[i]), sum(fn_list[i]), sum(id_switch_list[i])))
