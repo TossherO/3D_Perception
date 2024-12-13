@@ -23,7 +23,6 @@ def get_rot_mats(thea_list):
 
 
 def rotation(seq, refer_point_index=0):  # rigid transformation
-
     # seq [N T 2]
     angle = np.arctan2(seq[:, refer_point_index, 1], seq[:, refer_point_index, 0])
     rot_mat = get_rot_mats(angle)
@@ -32,15 +31,10 @@ def rotation(seq, refer_point_index=0):  # rigid transformation
     return rot_seq, rot_mat
 
 
-def my_rotation(ped_trajs, obs_len):
-
+def my_rotation(ped_trajs):
     # ped_trajs [N T 2]
-
     for ped_traj in ped_trajs:
-        for i in range(obs_len):
-            if ped_traj[i][0] < 1e8:
-                ref_point = ped_traj[i]
-                break
+        ref_point = np.array(ped_traj[0], dtype=np.float64)
         angle = np.arctan2(ref_point[1], ref_point[0])
         rot_mat = np.array([[np.cos(angle), -np.sin(angle)],
                             [np.sin(angle), np.cos(angle)]])
@@ -120,7 +114,7 @@ def get_motion_modes(dataset, obs_len, pred_len, n_clusters, dataset_path, datas
     all_trajs = np.stack(trajs_list, axis=0) # [B T 2]
     all_trajs = translation(all_trajs, obs_len-1)
     # all_trajs, _ = rotation(all_trajs, 0)
-    all_trajs = my_rotation(all_trajs, obs_len)
+    all_trajs = my_rotation(all_trajs)
     motion_modes = trajectory_motion_modes(all_trajs, obs_len, n_units=n_clusters, 
                                       smooth_size=smooth_size, random_rotation=random_rotation)
     

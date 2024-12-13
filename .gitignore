@@ -4,3 +4,4 @@ data
 work_dirs
 *.pth
 unused*
+fig

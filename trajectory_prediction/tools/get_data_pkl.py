@@ -1,5 +1,9 @@
+import os
 import importlib
 import torch
+import numpy as np
+import pickle
+from sklearn.cluster import KMeans
 
 from dataloader import Dataloader
 from utils import seed, get_rng_state
@@ -64,3 +68,35 @@ if __name__ == "__main__":
             batch_size=config.batch_size, shuffle=True, batches_per_epoch=config.EPOCH_BATCHES, dataset_type='train',
             dataset_name=str(settings.train[0]).split('/')[1]
         )
+
+        # create motion modes
+        print('Creating motion modes...')
+        train_info_path = './data/' + str(settings.train[0]).split('/')[1] + '_train.pkl'
+        f = open(train_info_path, 'rb')
+        train_info = pickle.load(f)
+        f.close()
+
+        obs_len = config.OB_HORIZON
+        pred_len = config.PRED_HORIZON
+        results = []
+        for data in train_info:
+            traj = np.concatenate([np.array(data[0]), np.array(data[1])], axis=0)
+            traj = traj - traj[obs_len - 1]
+            ref = traj[0]
+            angle = np.arctan2(ref[1], ref[0])
+            rot_mat = np.array([[np.cos(angle), -np.sin(angle)],
+                                [np.sin(angle), np.cos(angle)]])
+            traj = np.dot(traj, rot_mat.T)
+            results.append(traj)
+        results = np.array(results)
+        cluster_data = results[:, obs_len:].reshape(results.shape[0], -1)
+        clf = KMeans(n_clusters=config.n_clusters, random_state=1).fit(cluster_data)
+        motion_modes = clf.cluster_centers_.reshape(config.n_clusters, -1, 2)
+
+        if not os.path.exists('./data'):
+            os.makedirs('./data')
+        save_path_file = './data/' + str(settings.train[0]).split('/')[1] + '_motion_modes.pkl'
+        f = open(save_path_file, 'wb')
+        pickle.dump(motion_modes, f)
+        f.close()
+        print('Finish creating motion modes')

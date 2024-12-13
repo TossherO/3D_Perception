@@ -230,6 +230,15 @@ class Dataloader(torch.utils.data.Dataset):
             for idx, item in tracks.items():
                 min_obs_len = 2
                 if item[self.ob_horizon - min_obs_len][0] < 1e8:
+                    step_range = [0, 0]
+                    for i in range(1, self.ob_horizon + self.pred_horizon):
+                        if item[i-1][0] < 1e8:
+                            if abs(item[i][0] - item[i-1][0]) > step_range[0]:
+                                step_range[0] = abs(item[i][0] - item[i-1][0])
+                            if abs(item[i][1] - item[i-1][1]) > step_range[1]:
+                                step_range[1] = abs(item[i][1] - item[i-1][1])
+                    if step_range[0] > 2 or step_range[1] > 2:
+                        continue
                     hist = np.array(item[:self.ob_horizon], dtype=np.float32)
                     for i in range(self.ob_horizon-min_obs_len, -1, -1):
                         if item[i][0] > 1e8:
@@ -285,5 +294,3 @@ class Dataloader(torch.utils.data.Dataset):
 if __name__ == '__main__':
 
     dataset_list = ['']
-
-    

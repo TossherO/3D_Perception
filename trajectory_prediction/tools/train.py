@@ -15,7 +15,6 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataset import TrajectoryDataset
-from utils import get_motion_modes
 from model.model import TrajectoryModel
 
 
@@ -59,17 +58,10 @@ test_dataset = TrajectoryDataset(dataset_path=args.dataset_path, dataset_name=ar
                                   scaling=False, obs_len=args.obs_len,
                                   dist_threshold=hp_config.dist_threshold, smooth=False)
 
-motion_modes_file = args.dataset_path + args.dataset_name + '_motion_modes.pkl'
-
-if not os.path.exists(motion_modes_file):
-    print('motionm modes generating ... ')
-    motion_modes = get_motion_modes(train_dataset, args.obs_len, args.pred_len, hp_config.n_clusters, args.dataset_path, args.dataset_name,
-                                    smooth_size=hp_config.smooth_size, random_rotation=hp_config.random_rotation, traj_seg=hp_config.traj_seg)
-    motion_modes = torch.tensor(motion_modes, dtype=torch.float32).cuda()
-    
 train_loader = DataLoader(train_dataset, collate_fn=train_dataset.coll_fn, batch_size=hp_config.batch_size, shuffle=True, num_workers=args.num_works)
 test_loader = DataLoader(test_dataset, collate_fn=test_dataset.coll_fn, batch_size=hp_config.batch_size, shuffle=True, num_workers=args.num_works)
 
+motion_modes_file = args.dataset_path + args.dataset_name + '_motion_modes.pkl'
 if os.path.exists(motion_modes_file):
     print('motion modes loading ... ')
     import pickle
