@@ -24,8 +24,6 @@ parser.add_argument('--dataset_name', type=str, default='sdd')
 parser.add_argument("--hp_config", type=str, default=None, help='hyper-parameter')
 parser.add_argument('--lr_scaling', action='store_true', default=False)
 parser.add_argument('--num_works', type=int, default=8)
-parser.add_argument('--obs_len', type=int, default=8)
-parser.add_argument('--pred_len', type=int, default=12)
 parser.add_argument('--seed', type=int, default=1)
 parser.add_argument('--gpu', type=str, default='0')
 parser.add_argument('--data_scaling', type=list, default=[1.9, 0.4])
@@ -46,16 +44,17 @@ os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 spec = importlib.util.spec_from_file_location("hp_config", args.hp_config)
 hp_config = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(hp_config)
-
+obs_len = hp_config.OB_HORIZON
+pred_len = hp_config.PRED_HORIZON
 
 train_dataset = TrajectoryDataset(dataset_path=args.dataset_path, dataset_name=args.dataset_name,
                                   dataset_type='train', translation=True, rotation=True, 
-                                  scaling=True, obs_len=args.obs_len, 
+                                  scaling=True, obs_len=obs_len, 
                                   dist_threshold=hp_config.dist_threshold, smooth=False) 
 
 test_dataset = TrajectoryDataset(dataset_path=args.dataset_path, dataset_name=args.dataset_name,
                                   dataset_type='test', translation=True, rotation=True, 
-                                  scaling=False, obs_len=args.obs_len,
+                                  scaling=False, obs_len=obs_len,
                                   dist_threshold=hp_config.dist_threshold, smooth=False)
 
 train_loader = DataLoader(train_dataset, collate_fn=train_dataset.coll_fn, batch_size=hp_config.batch_size, shuffle=True, num_workers=args.num_works)
@@ -70,7 +69,7 @@ if os.path.exists(motion_modes_file):
     f.close()
     motion_modes = torch.tensor(motion_modes, dtype=torch.float32).cuda()
 
-model = TrajectoryModel(in_size=2, obs_len=args.obs_len, pred_len=args.pred_len, embed_size=hp_config.model_hidden_dim, 
+model = TrajectoryModel(in_size=2, obs_len=obs_len, pred_len=pred_len, embed_size=hp_config.model_hidden_dim, 
                         enc_num_layers=2, int_num_layers_list=[1,1], heads=4, forward_expansion=2)
 model = model.cuda()
 
@@ -115,9 +114,9 @@ def train(epoch, model, reg_criterion, cls_criterion, optimizer, train_dataloade
         scale = scale.reshape(ped.shape[0], 1, 1, 1)
         neis = neis * scale
 
-        ped_obs = ped[:, :args.obs_len]
-        gt = ped[:, args.obs_len:]
-        neis_obs = neis[:, :, :args.obs_len]
+        ped_obs = ped[:, :obs_len]
+        gt = ped[:, obs_len:]
+        neis_obs = neis[:, :, :obs_len]
 
         with torch.no_grad():
             soft_label, closest_mode_indices = get_cls_label(gt, motion_modes)
@@ -193,9 +192,9 @@ def test(model, test_dataloader, motion_modes):
         neis = neis.cuda()
         mask = mask.cuda() 
 
-        ped_obs = ped[:, :args.obs_len]
-        gt = ped[:, args.obs_len:]
-        neis_obs = neis[:, :, :args.obs_len]
+        ped_obs = ped[:, :obs_len]
+        gt = ped[:, obs_len:]
+        neis_obs = neis[:, :, :obs_len]
 
         with torch.no_grad():
             

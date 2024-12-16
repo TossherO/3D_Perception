@@ -1,7 +1,7 @@
 # model
 OB_RADIUS = 2       # observe radius, neighborhood radius
-OB_HORIZON = 8      # number of observation frames
-PRED_HORIZON = 12   # number of prediction frames
+OB_HORIZON = 16      # number of observation frames
+PRED_HORIZON = 24   # number of prediction frames
 # group name of inclusive agents; leave empty to include all agents
 # non-inclusive agents will appear as neighbors only
 INCLUSIVE_GROUPS = []

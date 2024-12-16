@@ -43,28 +43,6 @@ def create_trajecotry_split(root_path, split_meta, split):
         save_path = os.path.join(root_path, split, f'{scene_idx}_{frame_list[0]}_{frame_list[-1]}.txt')
         np.savetxt(save_path, data_list, fmt='%d %d %f %f')
         print(f'Save {save_path} done!')
-    # path = path_root +'anno/'
-    # all_files = [str(file)+'.json' for file in load_dict[split]]
-    # for file in all_files:
-    #     file_group_path = ''.join([path, file])
-    #     with open(file_group_path, 'r') as load_f:
-    #         load_dict = json.load(load_f)
-        
-    #     if split == 'val':
-    #         split = 'test'
-    #     Path(path_root + split).mkdir(parents=True, exist_ok=True)
-    #     save_path = path_root + split + '/' + file.split('.')[0] + '.txt'
-    #     data_list = []
-    #     for frame in load_dict['frames']:
-    #         frame_id = frame['frameId']
-    #         for item in frame['items']:
-    #             if item['boundingbox']['z'] < 1.2:
-    #                 continue
-    #             id = item['number']
-    #             x, y = item['position']['x'], item['position']['y']
-    #             data_list.append([frame_id, id, x, y])
-
-    #     np.savetxt(save_path, data_list, fmt='%d %d %f %f')
 
 
 if __name__ == "__main__":
