@@ -56,7 +56,7 @@ if __name__ == '__main__':
             ),
             make_cuda_ext(
                 name='voxel_layer',
-                module='projects.BEVFusion.bevfusion.ops.voxel',
+                module='my_projects.BEVFusion.bevfusion.ops.voxel',
                 sources=[
                     'src/voxelization.cpp',
                     'src/scatter_points_cpu.cpp',
