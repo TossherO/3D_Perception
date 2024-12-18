@@ -140,6 +140,7 @@ train_pipeline = [
         type='LoadMultiViewImageFromFilesNus',
         to_float32=True,
         color_type='color',
+        num_views=2,
         backend_args=backend_args
     ),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
@@ -187,7 +188,7 @@ test_pipeline = [
         type='LoadMultiViewImageFromFilesNus',
         to_float32=True,
         color_type='color',
-        num_views = 2,
+        num_views=2,
         backend_args=backend_args
     ),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
