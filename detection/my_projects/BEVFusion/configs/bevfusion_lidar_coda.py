@@ -108,7 +108,7 @@ model = dict(
             pc_range=[-21.0, -21.0],
             nms_type=None),
         common_heads=dict(
-            center=[2, 2], height=[1, 2], dim=[3, 2], rot=[2, 2], vel=[2, 2]),
+            center=[2, 2], height=[1, 2], dim=[3, 2], rot=[2, 2]),
         bbox_coder=dict(
             type='TransFusionBBoxCoder',
             pc_range=[-21.0, -21.0],
