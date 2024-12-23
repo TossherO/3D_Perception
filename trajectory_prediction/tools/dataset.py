@@ -34,17 +34,18 @@ class TrajectoryDataset(data.Dataset):
             ped_obs_traj, ped_pred_traj, neis_traj = item[0], item[1], item[2] # [T 2] [N T 2] N is not a fixed number
             ped_traj = np.concatenate((ped_obs_traj, ped_pred_traj), axis=0)
             # neis_traj = neis_traj[:, :, :2].transpose(1, 0, 2)
-            if neis_traj.shape[0] == 0:
-                neis_traj = np.expand_dims(ped_obs_traj, axis=0)
-            else:
-                neis_traj = np.concatenate((np.expand_dims(ped_obs_traj, axis=0), neis_traj), axis=0)
-            distance_mask = neis_traj[:, :, 0] > 1e8
-            distance = np.linalg.norm(np.expand_dims(ped_obs_traj, axis=0) - neis_traj, axis=-1)
-            # distance = np.mean(distance, axis=-1) # mean distance
-            distance[distance_mask] = 1e9
-            distance = np.min(distance, axis=-1) # min distance
-            # distance = distance[:, -1] # final distance
-            neis_traj = neis_traj[distance < self.dist_threshold]
+            # if neis_traj.shape[0] == 0:
+            #     neis_traj = np.expand_dims(ped_obs_traj, axis=0)
+            # else:
+            #     neis_traj = np.concatenate((np.expand_dims(ped_obs_traj, axis=0), neis_traj), axis=0)
+            if neis_traj.shape[0] != 0:
+                distance_mask = neis_traj[:, :, 0] > 1e8
+                distance = np.linalg.norm(np.expand_dims(ped_obs_traj, axis=0) - neis_traj, axis=-1)
+                # distance = np.mean(distance, axis=-1) # mean distance
+                distance[distance_mask] = 1e9
+                distance = np.min(distance, axis=-1) # min distance
+                # distance = distance[:, -1] # final distance
+                neis_traj = neis_traj[distance < self.dist_threshold]
 
             n_neighbors.append(neis_traj.shape[0])
             if self.translation:
@@ -89,13 +90,17 @@ class TrajectoryDataset(data.Dataset):
             neis.append(neis_traj)
             
         max_neighbors = max(n_neighbors)
+        if max_neighbors == 0:
+            max_neighbors = 1
         neis_pad = []
         neis_mask = []
         for neighbor, n in zip(neis, n_neighbors):
-            neis_pad.append(
-                np.pad(neighbor, ((0, max_neighbors-n), (0, 0),  (0, 0)), 
-                "constant")
-            )
+            if n == 0:
+                neis_pad.append(np.zeros((max_neighbors, self.obs_len, 2)))
+            else:
+                neis_pad.append(
+                    np.pad(neighbor, ((0, max_neighbors-n), (0, 0),  (0, 0)), "constant")
+                )
             mask = np.zeros((max_neighbors, max_neighbors))
             mask[:n, :n] = 1
             neis_mask.append(mask)

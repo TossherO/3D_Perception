@@ -36,7 +36,7 @@ class TrajectoryModel(nn.Module):
 
         return int_feat # [B K embed_size]
     
-    def forward(self, ped_obs, neis_obs, motion_modes, mask, closest_mode_indices, test=False, num_k=20):
+    def forward(self, ped_obs, neis_obs, motion_modes, mask, closest_mode_indices, test=False, num_k=10):
 
         # ped_obs [B obs_len 2]
         # nei_obs [B N obs_len 2]
