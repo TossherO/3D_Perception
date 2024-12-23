@@ -26,6 +26,9 @@ class TrajectoryModel(nn.Module):
         # mask [B N N] is used to stop the attention from invalid agents
 
         neis = neis.reshape(neis.shape[0], neis.shape[1], -1)  # [B N obs_len*2]
+        positive = neis >= 0
+        neis[positive] = 1 / (neis[positive] + 1e-4)
+        neis[~positive] = 1 / (neis[~positive] - 1e-4)
         nei_embeddings = self.nei_embedding(neis)  # [B N embed_size]
         
         mask = mask[:, 0:1].repeat(1, ped.shape[1], 1)  # [B K N]
