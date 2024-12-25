@@ -27,6 +27,7 @@ class MOTModel:
         self.motion_model = general_configs['motion_model']
         self.max_age = general_configs['max_age_since_update']
         self.min_hits = general_configs['min_hits_to_birth']
+        self.single_match = general_configs['single_match']
         self.configs = general_configs
 
     
@@ -60,11 +61,15 @@ class MOTModel:
             unmatched_dets[k] = det_indexes[unmatched_dets[k]]
         
         # association in second stage
-        dets = input_data.dets
-        det_indexes = [i for i, det in enumerate(dets) if det.s >= self.score_threshold_second_stage]
-        dets = [dets[i] for i in det_indexes]
-        unmatched_trk_preds = [self.trackers[t].get_state() for t in unmatched_trks]
-        update_modes = associate_unmatched_trks(dets, unmatched_trk_preds, self.asso, self.asso_thres_second_stage)
+        if self.single_match:
+            unmatched_trk_preds = [self.trackers[t].get_state() for t in unmatched_trks]
+            update_modes = [0] * len(unmatched_trks)
+        else:
+            dets = input_data.dets
+            det_indexes = [i for i, det in enumerate(dets) if det.s >= self.score_threshold_second_stage]
+            dets = [dets[i] for i in det_indexes]
+            unmatched_trk_preds = [self.trackers[t].get_state() for t in unmatched_trks]
+            update_modes = associate_unmatched_trks(dets, unmatched_trk_preds, self.asso, self.asso_thres_second_stage)
 
         # update the matched tracks
         for i in range(len(matched)):

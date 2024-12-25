@@ -58,7 +58,7 @@ def iou_rotated_2d(box3d1, box3d2):
 
 data_info = mmengine.load('./data/CODA/coda_infos_val.pkl')
 detection_results = mmengine.load('./data/CODA/detection_results.pkl')
-config_path = './configs/coda_configs/diou.yaml'
+config_path = './configs/coda_configs/giou.yaml'
 save_path = './work_dirs/' + time.strftime('%Y%m%d%H%M%S', time.localtime()) + '/'
 configs = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)
 point_cloud_range = [-21.0, -21.0, -2.0, 21.0, 21.0, 6.0]

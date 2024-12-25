@@ -1,9 +1,9 @@
 general:
   covariance: default
   max_age_since_update: 4
-  min_hits_to_birth: 2
+  min_hits_to_birth: 1
   match_type: bipartite
-  asso: diou
+  asso: giou
   motion_model: kf
   score_threshold: 0.5
   asso_thres:
@@ -19,7 +19,7 @@ general:
     giou: -0.5
     diou: -0.2
   has_velo: false
-  single_match: false
+  single_match: true
 
 class_specific:
   car: None

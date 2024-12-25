@@ -40,7 +40,7 @@ def bipartite_matcher(dets, tracks, asso, dist_threshold, trk_innovation_matrix)
     if torch.cuda.is_available():
         gpu_device = torch.cuda.current_device()
     if asso == 'iou' or asso == 'giou' or asso == 'diou':
-        if gpu_device is not None:
+        if gpu_device is not None and asso != 'giou':
             dist_matrix = compute_iou_distance_parallel(dets, tracks, asso, gpu_device)
         else:
             dist_matrix = compute_iou_distance(dets, tracks, asso)
@@ -144,6 +144,20 @@ def associate_unmatched_trks(dets, pred_bboxes, asso, dist_threshold):
     else:
         return None
     
+    if asso == 'giou':
+        update_modes = []
+        for trk in pred_bboxes:
+            max_iou = -1.0
+            for det in dets:
+                iou = utils.giou3d(det, trk)
+                if iou > max_iou:
+                    max_iou = iou
+            if max_iou > dist_threshold:
+                update_modes.append(3)
+            else:
+                update_modes.append(0)
+        return update_modes
+
     dets = torch.tensor(np.array([BBox.bbox2array(det, return_score=False) for det in dets]), dtype=torch.float32, device=gpu_device)
     tracks = torch.tensor(np.array([BBox.bbox2array(trk, return_score=False) for trk in pred_bboxes]), dtype=torch.float32, device=gpu_device)
     if len(dets) == 0 or len(tracks) == 0:
