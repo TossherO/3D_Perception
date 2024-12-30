@@ -42,7 +42,7 @@ if __name__ == "__main__":
     print(args)
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
-    train_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'train')
+    train_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'train', class_balance=True)
     val_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'val')
     train_dataloader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=4, collate_fn=train_dataset.collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, num_workers=4, collate_fn=val_dataset.collate_fn)

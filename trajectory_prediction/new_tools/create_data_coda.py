@@ -141,7 +141,7 @@ def create_trajecotry_split(root_path, split_meta, config, split):
 
             update_tracks(tracks, update_labels, update_ids, update_xys, config)
             new_data = data_preprocess(tracks, config)
-            data_list.extend(new_data)
+            data_list += new_data
         print(f'Scene {scene_idx} frame {frame_list[0]}_{frame_list[-1]} done!')
 
     save_path = os.path.join(root_path, f'coda_traj_{split}.pkl')

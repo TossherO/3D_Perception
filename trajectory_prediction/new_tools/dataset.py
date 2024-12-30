@@ -6,11 +6,13 @@ from torch.utils.data import Dataset
 
 class TrajectoryDataset(Dataset):
 
-    def __init__(self, dataset_path, dataset_name, split, translation=True, rotation=True):
+    def __init__(self, dataset_path, dataset_name, split, class_balance=False, translation=True, rotation=True):
         self.translation = translation
         self.rotation = rotation
         data_path = dataset_path + dataset_name + '_traj_' + split + '.pkl'
         self.data_list = mmengine.load(data_path)
+        if class_balance:
+            self.data_list = self.balance_data()
 
     def collate_fn(self, data_batch):
         batch_size = len(data_batch)
@@ -70,6 +72,23 @@ class TrajectoryDataset(Dataset):
         refs = torch.tensor(np.stack(refs, axis=0), dtype=torch.float32)
         rot_mats = torch.tensor(np.stack(rot_mats, axis=0), dtype=torch.float32)
         return obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats
+
+    def balance_data(self):
+        class_data_dict = {}
+        for data in self.data_list:
+            label = data['label']
+            if label not in class_data_dict:
+                class_data_dict[label] = []
+            class_data_dict[label].append(data)
+        max_num = max([len(class_data_dict[label]) for label in class_data_dict])
+        new_data_list = []
+        for label in class_data_dict:
+            class_data = class_data_dict[label]
+            num = len(class_data)
+            if num < max_num:
+                new_data_list += class_data * (max_num // num)
+            new_data_list += class_data[:max_num % num]
+        return new_data_list
 
     def __len__(self):
         return len(self.data_list)
