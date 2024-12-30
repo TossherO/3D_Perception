@@ -22,6 +22,7 @@ def options():
     parser.add_argument('--dataset_path', type=str, default='./data/CODA/')
     parser.add_argument('--dataset_name', type=str, default='coda')
     parser.add_argument('--config', type=str, default='./configs/coda.yaml')
+    parser.add_argument('--single_pred_label', type=int, default=-1)
     parser.add_argument('--lr_scaling', action='store_true', default=False)
     parser.add_argument('--num_works', type=int, default=4)
     parser.add_argument('--seed', type=int, default=1)
@@ -42,12 +43,12 @@ if __name__ == "__main__":
     print(args)
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
-    train_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'train', class_balance=True)
-    val_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'val')
+    train_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'train', args.single_pred_label, class_balance=True)
+    val_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'val', args.single_pred_label)
     train_dataloader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=4, collate_fn=train_dataset.collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, num_workers=4, collate_fn=val_dataset.collate_fn)
-    model = TrajectoryModel(num_class=config['num_class'], in_size=2, obs_len=config['obs_len'], pred_len=config['pred_len'], 
-                            embed_size=config['embed_size'], num_decode_layers=config['num_decode_layers'], num_modes=config['num_modes'])
+    model = TrajectoryModel(num_class=config['num_class'], in_size=2, obs_len=config['obs_len'], pred_len=config['pred_len'], embed_size=config['embed_size'], 
+                            num_decode_layers=config['num_decode_layers'], num_modes=config['num_modes'], pred_single=(args.single_pred_label>=0))
     model.cuda()
 
     optimizer = optim.Adam(model.parameters(), lr=config['lr'])
@@ -90,7 +91,7 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        total_loss = [total_loss[i] / num_traj[i] for i in range(config['num_class'])]
+        total_loss = [total_loss[i] / len(train_dataset) for i in range(config['num_class'])]
         print('Epoch: {}, Loss: {}'.format(epoch, total_loss))
         
         model.eval()
@@ -120,6 +121,8 @@ if __name__ == "__main__":
                     total_min_ade[i] += torch.sum(min_ade[mask]).item()
                     total_min_fde[i] += torch.sum(min_fde[mask]).item()
         for i in range(config['num_class']):
+            if num_traj[i] == 0:
+                continue
             total_min_ade[i] /= num_traj[i]
             total_min_fde[i] /= num_traj[i]
         print('Val: ADE: {}, FDE: {}; Best ADE: {}, FDE: {}'.format(total_min_ade, total_min_fde, global_min_ade, global_min_fde))

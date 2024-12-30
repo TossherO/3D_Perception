@@ -7,13 +7,16 @@ from .trajectory_decoder import Decoder
 class TrajectoryModel(nn.Module):
 
     def __init__(self, num_class, in_size, obs_len, pred_len, 
-                 embed_size, num_decode_layers, num_modes):
+                 embed_size, num_decode_layers, num_modes, pred_single=False):
         super(TrajectoryModel, self).__init__()
         self.num_class = num_class
         self.num_modes = num_modes
-        self.encoder = Encoder(num_class, in_size, obs_len, embed_size)
-        self.decoder = Decoder(num_class, in_size, pred_len, embed_size, num_decode_layers)
-        self.modes = nn.Parameter(torch.empty(num_class, num_modes, embed_size))
+        self.encoder = Encoder(num_class, in_size, obs_len, embed_size, pred_single)
+        self.decoder = Decoder(num_class, in_size, pred_len, embed_size, num_decode_layers, pred_single)
+        if pred_single:
+            self.modes = nn.Parameter(torch.empty(num_modes, embed_size))
+        else:
+            self.modes = nn.Parameter(torch.empty(num_class, num_modes, embed_size))
         nn.init.uniform_(self.modes, 0, 1)
 
     def forward(self, obs, neis, nei_masks, self_labels, nei_labels):

@@ -6,12 +6,14 @@ from torch.utils.data import Dataset
 
 class TrajectoryDataset(Dataset):
 
-    def __init__(self, dataset_path, dataset_name, split, class_balance=False, translation=True, rotation=True):
+    def __init__(self, dataset_path, dataset_name, split, single_perd_label=-1, class_balance=False, translation=True, rotation=True):
         self.translation = translation
         self.rotation = rotation
         data_path = dataset_path + dataset_name + '_traj_' + split + '.pkl'
         self.data_list = mmengine.load(data_path)
-        if class_balance:
+        if single_perd_label >= 0:
+            self.data_list = [data for data in self.data_list if data['label'] == single_perd_label]
+        elif class_balance:
             self.data_list = self.balance_data()
 
     def collate_fn(self, data_batch):
