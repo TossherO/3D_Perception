@@ -80,7 +80,7 @@ if __name__ == "__main__":
             for i in range(config['num_class']):
                 mask = (self_labels == i)
                 num = torch.sum(mask)
-                num_traj[i] += num
+                num_traj[i] += num.item()
                 if num == 0:
                     continue
                 reg_loss = reg_criterion(best_preds[mask].reshape(num, -1), futures[mask].reshape(num, -1))
@@ -90,7 +90,8 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        print('Epoch: {}, Loss: {}'.format(epoch, [total_loss[i] / num_traj[i] for i in range(config['num_class'])]))
+        total_loss = [total_loss[i] / num_traj[i] for i in range(config['num_class'])]
+        print('Epoch: {}, Loss: {}'.format(epoch, total_loss))
         
         model.eval()
         total_min_ade = [0 for _ in range(config['num_class'])]
@@ -113,7 +114,7 @@ if __name__ == "__main__":
                 for i in range(config['num_class']):
                     mask = (self_labels == i)
                     num = torch.sum(mask)
-                    num_traj[i] += num
+                    num_traj[i] += num.item()
                     if num == 0:
                         continue
                     total_min_ade[i] += torch.sum(min_ade[mask]).item()
