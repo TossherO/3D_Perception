@@ -56,15 +56,14 @@ if __name__ == "__main__":
     if args.lr_scaling:
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30, 40, 50], gamma=0.6)
 
-    global_min_ade = 100
-    global_min_fde = 100
+    global_min_ade = [100 for _ in range(config['num_class'])]
+    global_min_fde = [100 for _ in range(config['num_class'])]
     for epoch in range(config['epoch']):
 
         model.train()
-        total_loss = 0
-        num_traj = 0
+        total_loss = [0 for _ in range(config['num_class'])]
+        num_traj = [0 for _ in range(config['num_class'])]
         for data_batch in train_dataloader:
-            B = data_batch[0].size(0)
             data_batch = [tensor.cuda() for tensor in data_batch]
             obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats = data_batch
             preds, scores = model(obs, neis, nei_masks, self_labels, nei_labels)
@@ -77,23 +76,27 @@ if __name__ == "__main__":
             best_preds = preds[torch.arange(preds.size(0)), min_idx] # [B pred_len in_size]
             best_scores = scores[torch.arange(scores.size(0)), min_idx] # [B]
             # 计算损失
-            reg_loss = reg_criterion(best_preds.reshape(B, -1), futures.reshape(B, -1))
-            cls_loss = cls_criterion(best_scores, torch.ones(B).cuda())
-
-            loss = reg_loss + cls_loss
+            loss = 0
+            for i in range(config['num_class']):
+                mask = (self_labels == i)
+                num = torch.sum(mask)
+                num_traj[i] += num
+                if num == 0:
+                    continue
+                reg_loss = reg_criterion(best_preds[mask].reshape(num, -1), futures[mask].reshape(num, -1))
+                cls_loss = cls_criterion(best_scores[mask], torch.ones(num).cuda())
+                loss += reg_loss + cls_loss
+                total_loss[i] += (reg_loss + cls_loss).item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
-            num_traj += B
-        print('Epoch: {}, Loss: {}'.format(epoch, total_loss / num_traj))
+        print('Epoch: {}, Loss: {}'.format(epoch, [total_loss[i] / num_traj[i] for i in range(config['num_class'])]))
         
         model.eval()
-        total_min_ade = 0
-        total_min_fde = 0
-        num_traj = 0
+        total_min_ade = [0 for _ in range(config['num_class'])]
+        total_min_fde = [0 for _ in range(config['num_class'])]
+        num_traj = [0 for _ in range(config['num_class'])]
         for data_batch in val_dataloader:
-            B = data_batch[0].size(0)
             data_batch = [tensor.cuda() for tensor in data_batch]
             obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats = data_batch
             with torch.no_grad():
@@ -107,17 +110,23 @@ if __name__ == "__main__":
                 fde = dist[:, :, -1] # [B topK]
                 min_ade, min_ade_idx = torch.min(ade, dim=1) # [B], [B]
                 min_fde, min_fde_idx = torch.min(fde, dim=1) # [B], [B]
-                total_min_ade += torch.sum(min_ade)
-                total_min_fde += torch.sum(min_fde)
-                num_traj += B
-        total_min_ade = total_min_ade / num_traj
-        total_min_fde = total_min_fde / num_traj
+                for i in range(config['num_class']):
+                    mask = (self_labels == i)
+                    num = torch.sum(mask)
+                    num_traj[i] += num
+                    if num == 0:
+                        continue
+                    total_min_ade[i] += torch.sum(min_ade[mask]).item()
+                    total_min_fde[i] += torch.sum(min_fde[mask]).item()
+        for i in range(config['num_class']):
+            total_min_ade[i] /= num_traj[i]
+            total_min_fde[i] /= num_traj[i]
         print('Val: ADE: {}, FDE: {}; Best ADE: {}, FDE: {}'.format(total_min_ade, total_min_fde, global_min_ade, global_min_fde))
         
         if args.lr_scaling:
             scheduler.step()
 
-        if total_min_ade + total_min_fde < global_min_ade + global_min_fde:
+        if sum(total_min_ade) + sum(total_min_fde) < sum(global_min_ade) + sum(global_min_fde):
             global_min_ade = total_min_ade
             global_min_fde = total_min_fde
             torch.save(model.state_dict(), args.checkpoint + args.dataset_name + '_best.pth')
