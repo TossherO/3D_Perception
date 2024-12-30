@@ -24,7 +24,6 @@ def options():
     parser.add_argument('--config', type=str, default='./configs/coda.yaml')
     parser.add_argument('--lr_scaling', action='store_true', default=False)
     parser.add_argument('--num_works', type=int, default=4)
-    parser.add_argument('--topK', type=int, default=5)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--checkpoint', type=str, default='./checkpoint/')
@@ -100,9 +99,9 @@ if __name__ == "__main__":
             with torch.no_grad():
                 preds, scores = model(obs, neis, nei_masks, self_labels, nei_labels)
                 scores = F.softmax(scores, dim=-1)
-                topK_scores, topK_indices = torch.topk(scores, args.topK, dim=-1) # [B topK], [B topK]
+                topK_scores, topK_indices = torch.topk(scores, config['val_topK'], dim=-1) # [B topK], [B topK]
                 topK_preds = torch.gather(preds, 1, topK_indices.unsqueeze(-1).unsqueeze(-1).repeat(1, 1, preds.size(-2), preds.size(-1))) # [B topK pred_len in_size]
-                gt = futures.unsqueeze(1).repeat(1, args.topK, 1, 1)
+                gt = futures.unsqueeze(1).repeat(1, config['val_topK'], 1, 1)
                 dist = torch.sqrt(torch.sum((topK_preds - gt) ** 2, dim=-1)) # [B num_modes pred_len]
                 ade = torch.mean(dist, dim=-1) # [B topK]
                 fde = dist[:, :, -1] # [B topK]
