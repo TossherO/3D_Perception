@@ -85,7 +85,7 @@ class TrajectoryDataset(Dataset):
         for label in class_data_dict:
             class_data = class_data_dict[label]
             num = len(class_data)
-            if num < max_num:
+            if num <= max_num:
                 new_data_list += class_data * (max_num // num)
             new_data_list += class_data[:max_num % num]
         return new_data_list
