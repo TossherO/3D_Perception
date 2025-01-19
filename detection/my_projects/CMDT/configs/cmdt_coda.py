@@ -1,6 +1,6 @@
 _base_ = ['default_runtime.py']
 custom_imports = dict(
-    imports=['my_projects.CMT.cmt', 'my_projects.datasets'], allow_failed_imports=False)
+    imports=['my_projects.CMDT.cmdt', 'my_projects.datasets'], allow_failed_imports=False)
 
 # optimizer
 lr = 0.00014 / 4
@@ -283,7 +283,7 @@ visualizer = dict(
 voxel_size = [0.075, 0.075, 0.2]
 out_size_factor = 8
 model = dict(
-    type='CmtDetector',
+    type='CmdtDetector',
     use_grid_mask=True,
     data_preprocessor=dict(
         type='Det3DDataPreprocessor',
@@ -338,7 +338,7 @@ model = dict(
         upsample_cfg=dict(type='deconv', bias=False),
         use_conv_for_no_stride=True),
     pts_bbox_head=dict(
-        type='CmtHead',
+        type='CmdtHead',
         num_query=500,
         in_channels=512,
         hidden_dim=256,
@@ -357,14 +357,15 @@ model = dict(
         separate_head=dict(
             type='SeparateTaskHead', init_bias=-2.19, final_kernel=1),
         transformer=dict(
-            type='CmtTransformer',
+            type='CmdtTransformer',
             decoder=dict(
-                type='PETRTransformerDecoder',
+                type='CmdtTransformerDecoder',
                 return_intermediate=True,
                 num_layers=6,
                 transformerlayers=dict(
-                    type='PETRTransformerDecoderLayer',
+                    type='CmdtTransformerDecoderLayer',
                     with_cp=False,
+                    batch_first=True,
                     attn_cfgs=[
                         dict(
                             type='MultiheadAttention',
@@ -372,7 +373,7 @@ model = dict(
                             num_heads=8,
                             dropout=0.1),
                         dict(
-                            type='PETRMultiheadFlashAttention',
+                            type='DeformableAttention2MultiModality',
                             embed_dims=256,
                             num_heads=8,
                             dropout=0.1),
@@ -385,8 +386,6 @@ model = dict(
                         ffn_drop=0.,
                         act_cfg=dict(type='ReLU', inplace=True),
                     ),
-
-                    feedforward_channels=1024, #unused
                     operation_order=('self_attn', 'norm', 'cross_attn', 'norm',
                                      'ffn', 'norm')),
             )),
