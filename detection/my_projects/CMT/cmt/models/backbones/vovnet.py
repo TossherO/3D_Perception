@@ -1,11 +1,9 @@
 # ------------------------------------------------------------------------
-# Copyright (c) 2023 megvii-model. All Rights Reserved.
+# Modified from CMT (https://github.com/junjie18/CMT)
+# Copyright (c) 2023 Yan, Junjie
 # ------------------------------------------------------------------------
-# Modified from DETR3D (https://github.com/WangYueFt/detr3d)
-# Copyright (c) 2021 Wang, Yue
-# ------------------------------------------------------------------------
-# Copyright (c) Youngwan Lee (ETRI) All Rights Reserved.
-# Copyright 2021 Toyota Research Institute.  All rights reserved.
+# Modified from mmdetection3d (https://github.com/open-mmlab/mmdetection3d)
+# Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 
 

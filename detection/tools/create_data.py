@@ -1,4 +1,8 @@
+# ------------------------------------------------------------------------
+# Modified from mmdetection3d (https://github.com/open-mmlab/mmdetection3d)
 # Copyright (c) OpenMMLab. All rights reserved.
+# ------------------------------------------------------------------------
+
 import argparse
 from os import path as osp
 

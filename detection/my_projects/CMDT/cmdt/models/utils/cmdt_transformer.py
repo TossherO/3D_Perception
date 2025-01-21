@@ -1,9 +1,4 @@
 # ------------------------------------------------------------------------
-# Copyright (c) 2022 megvii-model. All Rights Reserved.
-# ------------------------------------------------------------------------
-# Modified from DETR3D (https://github.com/WangYueFt/detr3d)
-# Copyright (c) 2021 Wang, Yue
-# ------------------------------------------------------------------------
 # Modified from mmdetection3d (https://github.com/open-mmlab/mmdetection3d)
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
@@ -24,36 +19,36 @@ from mmcv.ops.multi_scale_deform_attn import MultiScaleDeformableAttnFunction
 from mmdet3d.registry import MODELS
 
 
-@MODELS.register_module()
-class CmdtTransformer(BaseModule):
+# @MODELS.register_module()
+# class CmdtTransformer(BaseModule):
 
-    def __init__(self, encoder=None, decoder=None, **kwargs):
-        super(CmdtTransformer, self).__init__(**kwargs)
-        if encoder is not None:
-            self.encoder = MODELS.build(encoder)
-        else:
-            self.encoder = None
-        self.decoder = MODELS.build(decoder)
+#     def __init__(self, encoder=None, decoder=None, **kwargs):
+#         super(CmdtTransformer, self).__init__(**kwargs)
+#         if encoder is not None:
+#             self.encoder = MODELS.build(encoder)
+#         else:
+#             self.encoder = None
+#         self.decoder = MODELS.build(decoder)
 
-    def forward(self, query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
-                reference_points, pc_range, img_metas, attn_masks=None):
-        """Forward function for `Transformer`.
-        Args:
-            query, query_pos (Tensor): [bs, num_query, embed_dims]
-            pts_feat, pts_pos (Tensor): [bs, pts_l, pts_w, embed_dims]
-            img_feat, img_pos (Tensor): [bs * num_cam, img_h, img_w, embed_dims]
-            reference_points (Tensor): [bs, num_query, 3]
-            pc_range (Tensor): [6]
-            img_metas (dict): meta information, must contain 'lidar2img' 'pad_shape'
-            attn_masks (Tensor): [num_query, num_query] or None
-        Returns:
-            out_dec (Tensor): [num_dec_layers, bs, num_query, embed_dims]
-        """
-        if self.encoder is not None:
-            pts_feat, img_feat = self.encoder(pts_feat, img_feat, pts_pos, img_pos, pc_range, img_metas)
-        out_dec = self.decoder(query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
-                                reference_points, pc_range, img_metas, attn_masks)
-        return out_dec
+#     def forward(self, query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
+#                 reference_points, pc_range, img_metas, attn_masks=None):
+#         """Forward function for `Transformer`.
+#         Args:
+#             query, query_pos (Tensor): [bs, num_query, embed_dims]
+#             pts_feat, pts_pos (Tensor): [bs, pts_l, pts_w, embed_dims]
+#             img_feat, img_pos (Tensor): [bs * num_cam, img_h, img_w, embed_dims]
+#             reference_points (Tensor): [bs, num_query, 3]
+#             pc_range (Tensor): [6]
+#             img_metas (dict): meta information, must contain 'lidar2img' 'pad_shape'
+#             attn_masks (Tensor): [num_query, num_query] or None
+#         Returns:
+#             out_dec (Tensor): [num_dec_layers, bs, num_query, embed_dims]
+#         """
+#         if self.encoder is not None:
+#             pts_feat, img_feat = self.encoder(pts_feat, img_feat, pts_pos, img_pos, pc_range, img_metas)
+#         out_dec = self.decoder(query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
+#                                 reference_points, pc_range, img_metas, attn_masks)
+#         return out_dec
 
 
 @MODELS.register_module()
@@ -73,7 +68,7 @@ class CmdtTransformerDecoder(TransformerLayerSequence):
             self.post_norm = None
 
     def forward(self, query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
-                reference_points, pc_range, img_metas, attn_masks):
+                reference_points, pc_range, img_metas, attn_masks=None, layer_idx=None):
         """Forward function for `TransformerDecoder`.
         Args:
             query, query_pos (Tensor): [bs, num_query, embed_dims]
@@ -84,22 +79,30 @@ class CmdtTransformerDecoder(TransformerLayerSequence):
             img_metas (dict): meta information, must contain 'lidar2img' 'pad_shape'
             attn_masks (Tensor): [num_query, num_query] or None
         Returns:
-            Tensor: Results with shape [1, num_query, bs, embed_dims] when
-                return_intermediate is `False`, otherwise it has shape
-                [num_layers, num_query, bs, embed_dims].
+            Tensor: If layer_idx is None, results with shape [1, num_query, bs, embed_dims] when 
+            return_intermediate is `False`, otherwise it has shape [num_layers, num_query, bs, embed_dims].
+            If layer_idx is not None, results with shape [bs, num_query, embed_dims].
         """
-        intermediate = []
-        for layer in self.layers:
-            query = layer(query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
-                            reference_points, pc_range, img_metas, attn_masks)
+        if layer_idx is None:
+            intermediate = []
+            for layer in self.layers:
+                query = layer(query, query_pos, pts_feat, pts_pos, img_feat, img_pos, 
+                                reference_points, pc_range, img_metas, attn_masks)
+                if self.return_intermediate:
+                    if self.post_norm is not None:
+                        intermediate.append(self.post_norm(query))
+                    else:
+                        intermediate.append(query)
             if self.return_intermediate:
-                if self.post_norm is not None:
-                    intermediate.append(self.post_norm(query))
-                else:
-                    intermediate.append(query)
-        if self.return_intermediate:
-            return torch.stack(intermediate)
-        return query.unsqueeze(0)
+                return torch.stack(intermediate)
+            return query.unsqueeze(0)
+        
+        else:
+            query = self.layers[layer_idx](query, query_pos, pts_feat, pts_pos, img_feat, img_pos,
+                                            reference_points, pc_range, img_metas, attn_masks)
+            if self.post_norm is not None:
+                query = self.post_norm(query)
+            return query
 
 
 @MODELS.register_module()
@@ -292,7 +295,7 @@ class CmdtTransformerDecoderLayer(BaseModule):
                 reference_points, pc_range, img_metas, attn_masks):
         """Forward function for `TransformerCoder`.
         Returns:
-            Tensor: forwarded results with shape [num_query, bs, embed_dims].
+            Tensor: forwarded results with shape [bs, num_query, embed_dims].
         """
 
         if self.use_checkpoint and self.training:
@@ -351,7 +354,7 @@ class DeformableAttention2MultiModality(BaseModule):
             pc_range (Tensor): [6]
             img_metas (dict): meta information, must contain 'lidar2img' 'pad_shape'
         Returns:
-            Tensor: [num_query, bs, embed_dims]
+            Tensor: [bs, num_query, embed_dims]
         """
         bs, num_query, embed_dims = query.shape
         pts_l, pts_w = pts_feat.shape[1], pts_feat.shape[2]
@@ -368,7 +371,7 @@ class DeformableAttention2MultiModality(BaseModule):
         pts_feat = self.pts_proj(pts_feat + pts_pos).view(bs, pts_l * pts_w, self.num_heads, -1)
         img_feat = self.img_proj(img_feat + img_pos).view(bs * num_cam, img_h * img_w, self.num_heads, -1)
 
-        # get sampling offsets and attention 
+        # get sampling offsets and attention
         identity = query
         query = query + query_pos
         sampling_offsets = self.sampling_offsets(query).view(
@@ -393,11 +396,12 @@ class DeformableAttention2MultiModality(BaseModule):
 
         # get img sampling points
         img_points = torch.matmul(lidars2imgs[:, :, None, None, None], sampling_points[:, None, ..., None]).squeeze(-1)
-        img_points[..., 0] = img_points[..., 0] / torch.clamp(img_points[..., 2], min=1e-5) / img_metas[0]['pad_shape'][1]
-        img_points[..., 1] = img_points[..., 1] / torch.clamp(img_points[..., 2], min=1e-5) / img_metas[0]['pad_shape'][0]
+        img_points = img_points[..., :2] / torch.clamp(img_points[..., 2:3], min=1e-5)
+        img_points[..., 0] = img_points[..., 0] / img_metas[0]['pad_shape'][1]
+        img_points[..., 1] = img_points[..., 1] / img_metas[0]['pad_shape'][0]
         # img_point_mask = (img_points[..., 0] >= 0) & (img_points[..., 0] <= 1) & (img_points[..., 1] >= 0) & (img_points[..., 1] <= 1) & (img_points[..., 2] > 0)
-        img_points = img_points[..., :2].view(bs*num_cam, num_query, self.num_heads, 1, self.num_points, 2).contiguous()
-
+        img_points = img_points.view(bs*num_cam, num_query, self.num_heads, 1, self.num_points, 2).contiguous()
+        
         # get pts, img features
         out_pts = MultiScaleDeformableAttnFunction.apply(
             pts_feat, torch.tensor([[pts_l, pts_w]]).to(query.device), torch.tensor([0]).to(query.device), pts_points, pts_attention_weights, self.im2col_step)

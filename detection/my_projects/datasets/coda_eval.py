@@ -1,4 +1,8 @@
+# ------------------------------------------------------------------------
+# Modified from mmdetection3d (https://github.com/open-mmlab/mmdetection3d)
 # Copyright (c) OpenMMLab. All rights reserved.
+# ------------------------------------------------------------------------
+
 import gc
 import io as sysio
 

@@ -1,4 +1,7 @@
-# Copyright (c) 2023 megvii-model. All Rights Reserved.
+# ------------------------------------------------------------------------
+# Modified from CMT (https://github.com/junjie18/CMT)
+# Copyright (c) 2023 Yan, Junjie
+# ------------------------------------------------------------------------
 
 import torch
 import torch.nn as nn

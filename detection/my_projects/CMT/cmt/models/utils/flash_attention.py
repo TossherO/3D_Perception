@@ -1,4 +1,10 @@
-# Copyright (c) 2023 megvii-model. All Rights Reserved.
+# ------------------------------------------------------------------------
+# Modified from CMT (https://github.com/junjie18/CMT)
+# Copyright (c) 2023 Yan, Junjie
+# ------------------------------------------------------------------------
+# Modified from mmdetection3d (https://github.com/open-mmlab/mmdetection3d)
+# Copyright (c) OpenMMLab. All rights reserved.
+# ------------------------------------------------------------------------
 
 import torch
 import torch.nn as nn

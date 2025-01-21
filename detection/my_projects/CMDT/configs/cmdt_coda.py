@@ -354,40 +354,35 @@ model = dict(
             score_threshold=0.1,
             voxel_size=voxel_size,
             num_classes=len(class_names)), 
-        separate_head=dict(
-            type='SeparateTaskHead', init_bias=-2.19, final_kernel=1),
-        transformer=dict(
-            type='CmdtTransformer',
-            decoder=dict(
-                type='CmdtTransformerDecoder',
-                return_intermediate=True,
-                num_layers=6,
-                transformerlayers=dict(
-                    type='CmdtTransformerDecoderLayer',
-                    with_cp=False,
-                    batch_first=True,
-                    attn_cfgs=[
-                        dict(
-                            type='MultiheadAttention',
-                            embed_dims=256,
-                            num_heads=8,
-                            dropout=0.1),
-                        dict(
-                            type='DeformableAttention2MultiModality',
-                            embed_dims=256,
-                            num_heads=8,
-                            dropout=0.1),
-                        ],
-                    ffn_cfgs=dict(
-                        type='FFN',
+        transformer_decoder=dict(
+            type='CmdtTransformerDecoder',
+            return_intermediate=True,
+            num_layers=6,
+            transformerlayers=dict(
+                type='CmdtTransformerDecoderLayer',
+                with_cp=False,
+                batch_first=True,
+                attn_cfgs=[
+                    dict(
+                        type='MultiheadAttention',
                         embed_dims=256,
-                        feedforward_channels=1024,
-                        num_fcs=2,
-                        ffn_drop=0.,
-                        act_cfg=dict(type='ReLU', inplace=True),
-                    ),
-                    operation_order=('self_attn', 'norm', 'cross_attn', 'norm',
-                                     'ffn', 'norm')),
+                        num_heads=8,
+                        dropout=0.1),
+                    dict(
+                        type='DeformableAttention2MultiModality',
+                        embed_dims=256,
+                        num_heads=8,
+                        dropout=0.1),
+                    ],
+                ffn_cfgs=dict(
+                    type='FFN',
+                    embed_dims=256,
+                    feedforward_channels=1024,
+                    num_fcs=2,
+                    ffn_drop=0.,
+                    act_cfg=dict(type='ReLU', inplace=True),
+                ),
+                operation_order=('self_attn', 'norm', 'cross_attn', 'norm', 'ffn', 'norm')
             )),
         loss_cls=dict(type='mmdet.FocalLoss', use_sigmoid=True, gamma=2, alpha=0.25, reduction='mean', loss_weight=2.0),
         loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=0.25),
