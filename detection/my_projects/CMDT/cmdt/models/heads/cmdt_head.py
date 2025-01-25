@@ -17,6 +17,7 @@ from mmdet.models.utils import multi_apply
 from mmdet.utils import reduce_mean
 from mmdet.models.layers import inverse_sigmoid
 from mmdet3d.registry import MODELS, TASK_UTILS
+from einops import rearrange
 from ...core.util import normalize_bbox
 from mmengine.structures import InstanceData
 
@@ -34,157 +35,157 @@ def pos2embed(pos, num_pos_feats=128, temperature=10000):
     return posemb
 
 
-# class LayerNormFunction(torch.autograd.Function):
+class LayerNormFunction(torch.autograd.Function):
 
-#     @staticmethod
-#     def forward(ctx, x, weight, bias, groups, eps):
-#         ctx.groups = groups
-#         ctx.eps = eps
-#         N, C, L = x.size()
-#         x = x.view(N, groups, C // groups, L)
-#         mu = x.mean(2, keepdim=True)
-#         var = (x - mu).pow(2).mean(2, keepdim=True)
-#         y = (x - mu) / (var + eps).sqrt()
-#         ctx.save_for_backward(y, var, weight)
-#         y = weight.view(1, C, 1) * y.view(N, C, L) + bias.view(1, C, 1)
-#         return y
+    @staticmethod
+    def forward(ctx, x, weight, bias, groups, eps):
+        ctx.groups = groups
+        ctx.eps = eps
+        N, C, L = x.size()
+        x = x.view(N, groups, C // groups, L)
+        mu = x.mean(2, keepdim=True)
+        var = (x - mu).pow(2).mean(2, keepdim=True)
+        y = (x - mu) / (var + eps).sqrt()
+        ctx.save_for_backward(y, var, weight)
+        y = weight.view(1, C, 1) * y.view(N, C, L) + bias.view(1, C, 1)
+        return y
 
-#     @staticmethod
-#     def backward(ctx, grad_output):
-#         groups = ctx.groups
-#         eps = ctx.eps
+    @staticmethod
+    def backward(ctx, grad_output):
+        groups = ctx.groups
+        eps = ctx.eps
 
-#         N, C, L = grad_output.size()
-#         y, var, weight = ctx.saved_variables
-#         g = grad_output * weight.view(1, C, 1)
-#         g = g.view(N, groups, C//groups, L)
-#         mean_g = g.mean(dim=2, keepdim=True)
-#         mean_gy = (g * y).mean(dim=2, keepdim=True)
-#         gx = 1. / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
-#         return gx.view(N, C, L), (grad_output * y.view(N, C, L)).sum(dim=2).sum(dim=0), grad_output.sum(dim=2).sum(
-#             dim=0), None, None
-
-
-# class GroupLayerNorm1d(nn.Module):
-
-#     def __init__(self, channels, groups=1, eps=1e-6):
-#         super(GroupLayerNorm1d, self).__init__()
-#         self.register_parameter('weight', nn.Parameter(torch.ones(channels)))
-#         self.register_parameter('bias', nn.Parameter(torch.zeros(channels)))
-#         self.groups = groups
-#         self.eps = eps
-
-#     def forward(self, x):
-#         return LayerNormFunction.apply(x, self.weight, self.bias, self.groups, self.eps)
+        N, C, L = grad_output.size()
+        y, var, weight = ctx.saved_variables
+        g = grad_output * weight.view(1, C, 1)
+        g = g.view(N, groups, C//groups, L)
+        mean_g = g.mean(dim=2, keepdim=True)
+        mean_gy = (g * y).mean(dim=2, keepdim=True)
+        gx = 1. / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
+        return gx.view(N, C, L), (grad_output * y.view(N, C, L)).sum(dim=2).sum(dim=0), grad_output.sum(dim=2).sum(
+            dim=0), None, None
 
 
-# @MODELS.register_module()
-# class SeparateTaskHead(BaseModule):
-#     """SeparateHead for CenterHead.
+class GroupLayerNorm1d(nn.Module):
 
-#     Args:
-#         in_channels (int): Input channels for conv_layer.
-#         heads (dict): Conv information.
-#         head_conv (int): Output channels.
-#             Default: 64.
-#         final_kernal (int): Kernal size for the last conv layer.
-#             Deafult: 1.
-#         init_bias (float): Initial bias. Default: -2.19.
-#         conv_cfg (dict): Config of conv layer.
-#             Default: dict(type='Conv2d')
-#         norm_cfg (dict): Config of norm layer.
-#             Default: dict(type='BN2d').
-#         bias (str): Type of bias. Default: 'auto'.
-#     """
+    def __init__(self, channels, groups=1, eps=1e-6):
+        super(GroupLayerNorm1d, self).__init__()
+        self.register_parameter('weight', nn.Parameter(torch.ones(channels)))
+        self.register_parameter('bias', nn.Parameter(torch.zeros(channels)))
+        self.groups = groups
+        self.eps = eps
 
-#     def __init__(self,
-#                  in_channels,
-#                  heads,
-#                  groups=1,
-#                  head_conv=64,
-#                  final_kernel=1,
-#                  init_bias=-2.19,
-#                  init_cfg=None,
-#                  **kwargs):
-#         assert init_cfg is None, 'To prevent abnormal initialization ' \
-#             'behavior, init_cfg is not allowed to be set'
-#         super(SeparateTaskHead, self).__init__(init_cfg=init_cfg)
-#         self.heads = heads
-#         self.groups = groups
-#         self.init_bias = init_bias
-#         for head in self.heads:
-#             classes, num_conv = self.heads[head]
+    def forward(self, x):
+        return LayerNormFunction.apply(x, self.weight, self.bias, self.groups, self.eps)
 
-#             conv_layers = []
-#             c_in = in_channels
-#             for i in range(num_conv - 1):
-#                 conv_layers.extend([
-#                     nn.Conv1d(
-#                         c_in * groups,
-#                         head_conv * groups,
-#                         kernel_size=final_kernel,
-#                         stride=1,
-#                         padding=final_kernel // 2,
-#                         groups=groups,
-#                         bias=False),
-#                     GroupLayerNorm1d(head_conv * groups, groups=groups),
-#                     nn.ReLU(inplace=True)
-#                 ])
-#                 c_in = head_conv
 
-#             conv_layers.append(
-#                 nn.Conv1d(
-#                     head_conv * groups,
-#                     classes * groups,
-#                     kernel_size=final_kernel,
-#                     stride=1,
-#                     padding=final_kernel // 2,
-#                     groups=groups,
-#                     bias=True))
-#             conv_layers = nn.Sequential(*conv_layers)
+@MODELS.register_module()
+class SeparateTaskHead(BaseModule):
+    """SeparateHead for CenterHead.
 
-#             self.__setattr__(head, conv_layers)
+    Args:
+        in_channels (int): Input channels for conv_layer.
+        heads (dict): Conv information.
+        head_conv (int): Output channels.
+            Default: 64.
+        final_kernal (int): Kernal size for the last conv layer.
+            Deafult: 1.
+        init_bias (float): Initial bias. Default: -2.19.
+        conv_cfg (dict): Config of conv layer.
+            Default: dict(type='Conv2d')
+        norm_cfg (dict): Config of norm layer.
+            Default: dict(type='BN2d').
+        bias (str): Type of bias. Default: 'auto'.
+    """
 
-#             if init_cfg is None:
-#                 self.init_cfg = dict(type='Kaiming', layer='Conv1d')
+    def __init__(self,
+                 in_channels,
+                 heads,
+                 groups=1,
+                 head_conv=64,
+                 final_kernel=1,
+                 init_bias=-2.19,
+                 init_cfg=None,
+                 **kwargs):
+        assert init_cfg is None, 'To prevent abnormal initialization ' \
+            'behavior, init_cfg is not allowed to be set'
+        super(SeparateTaskHead, self).__init__(init_cfg=init_cfg)
+        self.heads = heads
+        self.groups = groups
+        self.init_bias = init_bias
+        for head in self.heads:
+            classes, num_conv = self.heads[head]
 
-#     def init_weights(self):
-#         """Initialize weights."""
-#         super().init_weights()
-#         for head in self.heads:
-#             if head == 'cls_logits':
-#                 self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
+            conv_layers = []
+            c_in = in_channels
+            for i in range(num_conv - 1):
+                conv_layers.extend([
+                    nn.Conv1d(
+                        c_in * groups,
+                        head_conv * groups,
+                        kernel_size=final_kernel,
+                        stride=1,
+                        padding=final_kernel // 2,
+                        groups=groups,
+                        bias=False),
+                    GroupLayerNorm1d(head_conv * groups, groups=groups),
+                    nn.ReLU(inplace=True)
+                ])
+                c_in = head_conv
 
-#     def forward(self, x):
-#         """Forward function for SepHead.
+            conv_layers.append(
+                nn.Conv1d(
+                    head_conv * groups,
+                    classes * groups,
+                    kernel_size=final_kernel,
+                    stride=1,
+                    padding=final_kernel // 2,
+                    groups=groups,
+                    bias=True))
+            conv_layers = nn.Sequential(*conv_layers)
 
-#         Args:
-#             x (torch.Tensor): Input feature map with the shape of
-#                 [N, B, query, C].
+            self.__setattr__(head, conv_layers)
 
-#         Returns:
-#             dict[str: torch.Tensor]: contains the following keys:
+            if init_cfg is None:
+                self.init_cfg = dict(type='Kaiming', layer='Conv1d')
 
-#                 -reg （torch.Tensor): 2D regression value with the \
-#                     shape of [N, B, query, 2].
-#                 -height (torch.Tensor): Height value with the \
-#                     shape of [N, B, query, 1].
-#                 -dim (torch.Tensor): Size value with the shape \
-#                     of [N, B, query, 3].
-#                 -rot (torch.Tensor): Rotation value with the \
-#                     shape of [N, B, query, 2].
-#                 -vel (torch.Tensor): Velocity value with the \
-#                     shape of [N, B, query, 2].
-#         """
-#         N, B, query_num, c1 = x.shape
-#         x = rearrange(x, "n b q c -> b (n c) q")
-#         ret_dict = dict()
+    def init_weights(self):
+        """Initialize weights."""
+        super().init_weights()
+        for head in self.heads:
+            if head == 'cls_logits':
+                self.__getattr__(head)[-1].bias.data.fill_(self.init_bias)
+
+    def forward(self, x):
+        """Forward function for SepHead.
+
+        Args:
+            x (torch.Tensor): Input feature map with the shape of
+                [N, B, query, C].
+
+        Returns:
+            dict[str: torch.Tensor]: contains the following keys:
+
+                -reg （torch.Tensor): 2D regression value with the \
+                    shape of [N, B, query, 2].
+                -height (torch.Tensor): Height value with the \
+                    shape of [N, B, query, 1].
+                -dim (torch.Tensor): Size value with the shape \
+                    of [N, B, query, 3].
+                -rot (torch.Tensor): Rotation value with the \
+                    shape of [N, B, query, 2].
+                -vel (torch.Tensor): Velocity value with the \
+                    shape of [N, B, query, 2].
+        """
+        N, B, query_num, c1 = x.shape
+        x = rearrange(x, "n b q c -> b (n c) q")
+        ret_dict = dict()
         
-#         for head in self.heads:
-#              head_output = self.__getattr__(head)(x)
-#              ret_dict[head] = rearrange(head_output, "b (n c) q -> n b q c", n=N)
+        for head in self.heads:
+             head_output = self.__getattr__(head)(x)
+             ret_dict[head] = rearrange(head_output, "b (n c) q -> n b q c", n=N)
 
-#         return ret_dict
+        return ret_dict
 
 
 @MODELS.register_module()
@@ -230,6 +231,8 @@ class CmdtHead(BaseModule):
                      type="GaussianFocalLoss",
                      reduction="mean"
                  ),
+                 separate_head=dict(
+                     type='SeparateMlpHead', init_bias=-2.19, final_kernel=3),
                  init_cfg=None,
                  **kwargs):
         assert init_cfg is None
@@ -284,18 +287,13 @@ class CmdtHead(BaseModule):
         # task head
         heads = copy.deepcopy(common_heads)
         heads.update(dict(cls_logits=(self.num_class, 2)))
-        self.task_head = nn.ModuleDict()
-        for head_name in heads:
-            out_channels, num_conv = heads[head_name]
-            head_layers = []
-            for _ in range(num_conv):
-                head_layers.append(nn.Linear(hidden_dim, hidden_dim))
-                head_layers.append(nn.LayerNorm(hidden_dim))
-                head_layers.append(nn.ReLU(inplace=True))
-            head_layers.append(nn.Linear(hidden_dim, out_channels))
-            head_layers = nn.Sequential(*head_layers)
-            self.task_head[head_name] = nn.ModuleList([head_layers for _ in range(transformer_decoder.num_layers)])
-
+        separate_head.update(
+            in_channels=hidden_dim, heads=heads,
+            groups=transformer_decoder.num_layers
+        )
+        self.task_head = MODELS.build(separate_head)
+        self.layers_loss_weight = layers_loss_weight
+        
         # assigner
         if train_cfg:
             self.assigner = TASK_UTILS.build(train_cfg["assigner"])
@@ -471,39 +469,28 @@ class CmdtHead(BaseModule):
         img_feat = img_feat.permute(0, 2, 3, 1)
         pts_feat = pts_feat.permute(0, 2, 3, 1)
         
-        query = torch.zeros(pts_feat.shape[0], self.num_query, self.hidden_dim).to(pts_feat.device)
-        pc_range = torch.tensor(self.pc_range).to(pts_feat.device)
-        outs = dict([head_name, []] for head_name in self.task_head)
+        bev_query_embeds, rv_query_embeds = self.query_embed(reference_points, img_metas)
+        query_pos = bev_query_embeds + rv_query_embeds
+        query = torch.zeros_like(query_pos)
         
-        for i in range(self.transformer_decoder.num_layers):
-            bev_query_pos, rv_query_pos = self.query_embed(reference_points, img_metas)
-            query_pos = bev_query_pos + rv_query_pos
-            out_dec = self.transformer_decoder(query, query_pos, pts_feat, pts_pos, img_feat, img_pos, reference_points, 
-                                                pc_range, img_metas, attn_masks=attn_mask, layer_idx=i)
-            
-            out = dict()
-            for head_name in self.task_head:
-                out[head_name] = self.task_head[head_name][i](out_dec)
-            reference = inverse_sigmoid(reference_points.clone())
-            center = (out['center'] + reference[:, :, :2]).sigmoid()
-            height = (out['height'] + reference[:, :, 2:3]).sigmoid()
-            _center, _height = center.new_zeros(center.shape), height.new_zeros(height.shape)
-            _center[..., 0:1] = center[..., 0:1] * (self.pc_range[3] - self.pc_range[0]) + self.pc_range[0]
-            _center[..., 1:2] = center[..., 1:2] * (self.pc_range[4] - self.pc_range[1]) + self.pc_range[1]
-            _height[..., 0:1] = height[..., 0:1] * (self.pc_range[5] - self.pc_range[2]) + self.pc_range[2]
-            out['center'] = _center
-            out['height'] = _height
-            
-            query = out_dec
-            reference_points = torch.cat((center, height), dim=-1)
-            
-            for head_name in outs:
-                outs[head_name].append(out[head_name])
-                
-        for head_name in outs:
-            outs[head_name] = torch.stack(outs[head_name], dim=0)
+        pc_range = torch.tensor(self.pc_range).to(pts_feat.device)
+        outs_dec = self.transformer_decoder(query, query_pos, pts_feat, pts_pos, img_feat, img_pos,
+                                           reference_points, pc_range, img_metas, attn_masks=attn_mask)
+        outs_dec = torch.nan_to_num(outs_dec)
+
+        reference = inverse_sigmoid(reference_points.clone())
         
         flag = 0
+        outs = self.task_head(outs_dec)
+        center = (outs['center'] + reference[None, :, :, :2]).sigmoid()
+        height = (outs['height'] + reference[None, :, :, 2:3]).sigmoid()
+        _center, _height = center.new_zeros(center.shape), height.new_zeros(height.shape)
+        _center[..., 0:1] = center[..., 0:1] * (self.pc_range[3] - self.pc_range[0]) + self.pc_range[0]
+        _center[..., 1:2] = center[..., 1:2] * (self.pc_range[4] - self.pc_range[1]) + self.pc_range[1]
+        _height[..., 0:1] = height[..., 0:1] * (self.pc_range[5] - self.pc_range[2]) + self.pc_range[2]
+        outs['center'] = _center
+        outs['height'] = _height
+        
         if mask_dict and mask_dict['pad_size'] > 0:
             task_mask_dict = copy.deepcopy(mask_dict)
 

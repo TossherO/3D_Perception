@@ -354,6 +354,8 @@ model = dict(
             score_threshold=0.1,
             voxel_size=voxel_size,
             num_classes=len(class_names)), 
+        separate_head=dict(
+            type='SeparateTaskHead', init_bias=-2.19, final_kernel=1),
         transformer_decoder=dict(
             type='CmdtTransformerDecoder',
             return_intermediate=True,
