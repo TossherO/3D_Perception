@@ -387,7 +387,7 @@ model = dict(
                 operation_order=('self_attn', 'norm', 'cross_attn', 'norm', 'ffn', 'norm')
             )),
         loss_cls=dict(type='mmdet.FocalLoss', use_sigmoid=True, gamma=2, alpha=0.25, reduction='mean', loss_weight=2.0),
-        loss_bbox=dict(type='mmdet.L1Loss', reduction='mean', loss_weight=0.25),
+        loss_bbox=dict(type='mmdet3d.Truncated_L1Loss', reduction='mean', loss_weight=0.25),
         loss_heatmap=dict(type='mmdet.GaussianFocalLoss', reduction='mean', loss_weight=1.0),
     ),
     train_cfg=dict(
@@ -408,6 +408,10 @@ model = dict(
             voxel_size=voxel_size,
             out_size_factor=out_size_factor,
             code_weights=[2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            bbox_truncated_threshold=[[0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.15],
+                                        [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.1],
+                                        [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.05],
+                                        None, None, None],
             point_cloud_range=point_cloud_range)))
 
 # hooks

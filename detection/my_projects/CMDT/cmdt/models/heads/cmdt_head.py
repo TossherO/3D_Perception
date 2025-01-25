@@ -292,7 +292,6 @@ class CmdtHead(BaseModule):
             groups=transformer_decoder.num_layers
         )
         self.task_head = MODELS.build(separate_head)
-        self.layers_loss_weight = layers_loss_weight
         
         # assigner
         if train_cfg:
@@ -595,7 +594,8 @@ class CmdtHead(BaseModule):
                     pred_bboxes,
                     pred_logits,
                     gt_bboxes_3d,
-                    gt_labels_3d):
+                    gt_labels_3d,
+                    bbox_truncated_threshold):
         """"Loss function for outputs from a single decoder layer of a single
         feature level.
         Args:
@@ -628,12 +628,18 @@ class CmdtHead(BaseModule):
         normalized_bbox_targets = normalize_bbox(bbox_targets, self.pc_range)
         isnotnan = torch.isfinite(normalized_bbox_targets).all(dim=-1)
         bbox_weights = bbox_weights * bbox_weights.new_tensor(self.train_cfg.code_weights)[None, :]
-
+        
+        if bbox_truncated_threshold is not None:
+            truncated_threshold = torch.tensor(bbox_truncated_threshold).to(pred_bboxes.device)
+        else:
+            truncated_threshold = None
+            
         loss_bbox = self.loss_bbox(
             pred_bboxes_flatten[isnotnan, :],
             normalized_bbox_targets[isnotnan, :],
             bbox_weights[isnotnan, :],
-            avg_factor=num_total_pos
+            avg_factor=num_total_pos,
+            truncated_threshold=truncated_threshold
         )
 
         loss_cls = torch.nan_to_num(loss_cls)
@@ -737,6 +743,7 @@ class CmdtHead(BaseModule):
             self.loss_single, all_pred_bboxes, all_pred_logits,
             [gt_bboxes_3d for _ in range(num_decoder)],
             [gt_labels_3d for _ in range(num_decoder)], 
+            self.train_cfg.bbox_truncated_threshold
         )
 
         if self.layers_loss_weight != None:
