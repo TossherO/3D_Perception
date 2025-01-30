@@ -310,11 +310,18 @@ model = dict(
         max_voxels=(120000, 160000),
         point_cloud_range=point_cloud_range),
     pts_voxel_encoder=dict(
-        type='HardSimpleVFE',
-        num_features=4),
+        type='HardVFE',
+        in_channels=4,
+        feat_channels=[16, 16],
+        with_distance=False,
+        voxel_size=voxel_size,
+        with_cluster_center=True,
+        with_voxel_center=True,
+        point_cloud_range=point_cloud_range,
+        norm_cfg=dict(type='naiveSyncBN1d', eps=1e-3, momentum=0.01)),
     pts_middle_encoder=dict(
         type='SparseEncoder',
-        in_channels=4,
+        in_channels=16,
         sparse_shape=[41, 560, 560],
         output_channels=128,
         order=('conv', 'norm', 'act'),
@@ -408,10 +415,7 @@ model = dict(
             voxel_size=voxel_size,
             out_size_factor=out_size_factor,
             code_weights=[2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            bbox_truncated_threshold=[[0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.15],
-                                        [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.1],
-                                        [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.05],
-                                        None, None, None],
+            bbox_truncated_threshold=[[0.2] * 7, [0.15] * 7, [0.1] * 7, [0.05] * 7, None, None],
             point_cloud_range=point_cloud_range)))
 
 # hooks
@@ -420,7 +424,7 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=1),
     changestrategy=dict(
         type='ChangeStrategyHook',
-        change_epoch=[16, 26, -1],
+        change_epoch=[-1, 21, -1],
         change_strategy=['remove_GTSample', 'remove_DN', 'change_layers_loss_weight'],
         change_args=[None, None, None])
     )

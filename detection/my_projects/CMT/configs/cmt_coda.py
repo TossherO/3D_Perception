@@ -420,7 +420,7 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=1),
     changestrategy=dict(
         type='ChangeStrategyHook',
-        change_epoch=[16, 26, -1],
+        change_epoch=[-1, -1, -1],
         change_strategy=['remove_GTSample', 'remove_DN', 'change_layers_loss_weight'],
         change_args=[None, None, None])
     )
