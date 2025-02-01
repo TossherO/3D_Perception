@@ -257,7 +257,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='coda_infos_val.pkl',
+        ann_file='coda_infos_test.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -272,7 +272,11 @@ val_evaluator = dict(
     ann_file=data_root + 'coda_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
-test_evaluator = val_evaluator
+test_evaluator = dict(
+    type='CodaMetric',
+    ann_file=data_root + 'coda_infos_test.pkl',
+    metric='bbox',
+    backend_args=backend_args)
 
 # visualization settings
 vis_backends = [dict(type='LocalVisBackend')]

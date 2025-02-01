@@ -6,7 +6,7 @@ def calculate_vertival_angle(points):
     x, y, z = points[:, 0], points[:, 1], points[:, 2]
     horizontal_distance = np.sqrt(x ** 2 + y ** 2)
     vertical_angle = np.arctan2(z, horizontal_distance)
-    return vertical_angle
+    return np.degrees(vertical_angle)
 
 def assign_line_number(points, num_lines=128, min_angle=-22.5, max_angle=22.5):
     vertical_angle = calculate_vertival_angle(points)
@@ -30,8 +30,7 @@ def downsample_pcd(points, original_line_number=128, target_line_number=16):
 if __name__ == '__main__':
     
     root_path = './data/CODA'
-    # sequences = list(range(0, 21))
-    sequences = [10]
+    sequences = list(range(0, 21))
 
     for seq in sequences:
         pcd_path = os.path.join(root_path, '3d_comp', 'os1', str(seq))

@@ -62,7 +62,7 @@ test_cfg = dict()
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 # dataset settings
-point_cloud_range = [0, -9.6, -0.5, 14.4, 9.6, 3.5]
+point_cloud_range = [0, -9.6, -1.5, 14.4, 9.6, 4.5]
 # class_names=[
 #     #DynamicClasses
 #     "Car", "Pedestrian", "Bike", "Motorcycle", "Golf Cart", #Unused
@@ -85,7 +85,7 @@ point_cloud_range = [0, -9.6, -0.5, 14.4, 9.6, 3.5]
 # ]
 class_names = ['Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
-dataset_type = 'CodaDataset'
+dataset_type = 'CodaDataset_NoCar'
 data_root = 'data/CODA/'
 input_modality = dict(use_lidar=True, use_camera=True)
 data_prefix = dict(
@@ -98,8 +98,8 @@ backend_args = None
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[57.375, 57.120, 58.395], to_rgb=False)
 ida_aug_conf = {
-        "resize_lim": (0.25, 0.4),
-        "final_dim": (320, 480),
+        "resize_lim": (0.4, 0.5),
+        "final_dim": (480, 640),
         "bot_pct_lim": (0.0, 0.0),
         "rot_lim": (0.0, 0.0),
         "H": 1024,
@@ -283,7 +283,7 @@ visualizer = dict(
     type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 
 # model
-voxel_size = [0.075, 0.075, 0.1]
+voxel_size = [0.075, 0.075, 0.15]
 out_size_factor = 8
 model = dict(
     type='CmdtDetector',
