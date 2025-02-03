@@ -9,6 +9,7 @@ from os import path as osp
 from dataset_converters import kitti_converter
 from dataset_converters import nuscenes_converter
 from dataset_converters import coda_converter
+from dataset_converters import wheelchair_converter
 from dataset_converters.create_gt_database import GTDatabaseCreater, create_groundtruth_database
 from dataset_converters.update_infos_to_v2 import update_pkl_infos
 
@@ -104,6 +105,24 @@ def coda_data_prep(root_path,
         out_dir (str): Output directory of the info filenames.
     """
     coda_converter.create_coda_infos(root_path, info_prefix, out_dir, version=version)
+    
+    
+def wheelchair_data_prep(root_path,
+                        info_prefix,
+                        version,
+                        out_dir):
+    """Prepare data related to Wheelchair dataset.
+
+    Related data consists of '.pkl' files recording basic infos,
+    2D annotations and groundtruth database.
+
+    Args:
+        root_path (str): Path of dataset root.
+        info_prefix (str): The prefix of info filenames.
+        version (str): Dataset version.
+        out_dir (str): Output directory of the info filenames.
+    """
+    wheelchair_converter.create_wheelchair_infos(root_path, info_prefix, out_dir, version=version)
 
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
@@ -233,5 +252,17 @@ if __name__ == '__main__':
             create_groundtruth_database('CodaDataset', args.root_path,
                                         args.extra_tag,
                                         f'{args.extra_tag}_infos_train.pkl')
+    elif args.dataset == 'wheelchair':
+        if args.create_data_info:
+            wheelchair_data_prep(
+                root_path=args.root_path,
+                info_prefix=args.extra_tag,
+                version=args.version,
+                out_dir=args.out_dir)
+        if args.create_gt_database:
+            create_groundtruth_database('CodaDataset_NoCar', args.root_path,
+                                        args.extra_tag,
+                                        f'{args.extra_tag}_infos_train.pkl')
+    
     else:
         raise NotImplementedError(f'Don\'t support {args.dataset} dataset.')

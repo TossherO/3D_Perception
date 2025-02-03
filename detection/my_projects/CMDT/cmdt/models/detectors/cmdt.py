@@ -26,8 +26,9 @@ class CmdtDetector(MVXTwoStageDetector):
                  use_grid_mask=False,
                  **kwargs):
         pts_voxel_cfg = kwargs.get('pts_voxel_layer', None)
-        # kwargs['pts_voxel_layer'] = None
         kwargs.pop('pts_voxel_layer', None)
+        self.return_pts_feat = kwargs.get('return_pts_feat', False)
+        kwargs.pop('return_pts_feat', None)
         super(CmdtDetector, self).__init__(**kwargs)
         
         self.use_grid_mask = use_grid_mask
@@ -219,7 +220,10 @@ class CmdtDetector(MVXTwoStageDetector):
         detsamples = self.add_pred_to_datasample(batch_data_samples,
                                                  data_instances_3d = bbox_pts,
                                                  data_instances_2d = None)
-        return detsamples
+        if self.return_pts_feat:
+            return detsamples, pts_feats[0]
+        else:
+            return detsamples
     
     # @force_fp32(apply_to=('x', 'x_img'))
     def pts_bbox_head_test(self, pts_feats, img_feats, img_metas, rescale=False):

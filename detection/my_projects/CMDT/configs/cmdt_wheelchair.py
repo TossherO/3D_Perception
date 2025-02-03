@@ -63,30 +63,10 @@ auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 # dataset settings
 point_cloud_range = [0, -9.6, -1.5, 14.4, 9.6, 4.5]
-# class_names=[
-#     #DynamicClasses
-#     "Car", "Pedestrian", "Bike", "Motorcycle", "Golf Cart", #Unused
-#     "Truck", #Unused
-#     "Scooter",
-#     #StaticClasses
-#     "Tree", "Traffic Sign", "Canopy", "Traffic Light", "Bike Rack", "Bollard", "Construction Barrier", #Unused
-#     "Parking Kiosk", "Mailbox", "Fire Hydrant",
-#     #StaticClassMixed
-#     "Freestanding Plant", "Pole", "Informational Sign", "Door", "Fence", "Railing", "Cone",
-#     "Chair", "Bench", "Table", "Trash Can", "Newspaper Dispenser",
-#     #StaticClassesIndoor
-#     "Room Label", "Stanchion", "Sanitizer Dispenser", "Condiment Dispenser", "Vending Machine",
-#     "Emergency Aid Kit", "Fire Extinguisher", "Computer", "Television", #unused
-#     "Other", "Horse",
-#     #NewClasses
-#     "Pickup Truck", "Delivery Truck", "Service Vehicle", "Utility Vehicle", "Fire Alarm", "ATM", "Cart", "Couch", 
-#     "Traffic Arm", "Wall Sign", "Floor Sign", "Door Switch", "Emergency Phone", "Dumpster", "Vacuum Cleaner", #unused
-#     "Segway", "Bus", "Skateboard", "Water Fountain"
-# ]
 class_names = ['Pedestrian', 'Cyclist']
 metainfo = dict(classes=class_names)
 dataset_type = 'CodaDataset_NoCar'
-data_root = 'data/CODA/'
+data_root = 'data/Wheelchair/'
 input_modality = dict(use_lidar=True, use_camera=True)
 data_prefix = dict(
     pts='',
@@ -131,7 +111,7 @@ db_sampler=dict(
 # pipeline
 train_pipeline = [
     dict(
-        type='LoadPointsFromFile',
+        type='LoadPointsFromPcdFile',
         coord_type='LIDAR',
         load_dim=4,
         use_dim=[0, 1, 2, 3],
@@ -178,7 +158,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(
-        type='LoadPointsFromFile',
+        type='LoadPointsFromPcdFile',
         coord_type='LIDAR',
         load_dim=4,
         use_dim=[0, 1, 2, 3],
@@ -220,7 +200,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='coda_16lines_infos_train.pkl',
+            ann_file='wheelchair_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
@@ -239,7 +219,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='coda_16lines_infos_val.pkl',
+        ann_file='wheelchair_infos_val.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -256,7 +236,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='coda_16lines_infos_test.pkl',
+        ann_file='wheelchair_infos_val.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -268,12 +248,12 @@ test_dataloader = dict(
 # evaluator
 val_evaluator = dict(
     type='CodaMetric',
-    ann_file=data_root + 'coda_16lines_infos_val.pkl',
+    ann_file=data_root + 'wheelchair_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
 test_evaluator = dict(
     type='CodaMetric',
-    ann_file=data_root + 'coda_16lines_infos_test.pkl',
+    ann_file=data_root + 'wheelchair_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
 
@@ -433,6 +413,6 @@ default_hooks = dict(
     )
 
 # load_from='ckpts/pretrain/nuim_r50.pth'
-load_from='work_dirs/cmdt_coda_no_car/epoch_29.pth'
+load_from='work_dirs/cmdt_coda_16lines/epoch_29.pth'
 
 # resume = True

@@ -43,19 +43,23 @@ if __name__ == "__main__":
     print(args)
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
+    if args.single_pred_label >= 0:
+        scale = [config['scale'][args.single_pred_label]]
+    else:
+        scale = config['scale']
     train_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'train', args.single_pred_label, class_balance=True)
     val_dataset = TrajectoryDataset(args.dataset_path, args.dataset_name, 'val', args.single_pred_label)
     train_dataloader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=4, collate_fn=train_dataset.collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False, num_workers=4, collate_fn=val_dataset.collate_fn)
     model = TrajectoryModel(num_class=config['num_class'], in_size=2, obs_len=config['obs_len'], pred_len=config['pred_len'], embed_size=config['embed_size'], 
-                            num_decode_layers=config['num_decode_layers'], num_modes=config['num_modes'], pred_single=(args.single_pred_label>=0))
+                            num_decode_layers=config['num_decode_layers'], scale=scale, pred_single=(args.single_pred_label>=0))
     model.cuda()
 
     optimizer = optim.Adam(model.parameters(), lr=config['lr'])
     reg_criterion = torch.nn.SmoothL1Loss().cuda()
     cls_criterion = torch.nn.BCELoss().cuda()
     if args.lr_scaling:
-        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 20, 30, 40, 50], gamma=0.6)
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 15, 20, 25], gamma=0.6)
 
     global_min_ade = [100 for _ in range(config['num_class'])]
     global_min_fde = [100 for _ in range(config['num_class'])]
@@ -67,12 +71,12 @@ if __name__ == "__main__":
         for data_batch in train_dataloader:
             data_batch = [tensor.cuda() for tensor in data_batch]
             obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats = data_batch
-            preds, scores = model(obs, neis, nei_masks, self_labels, nei_labels)
+            preds, scores, init_traj = model(obs, neis, nei_masks, self_labels, nei_labels)
             scores = F.softmax(scores, dim=-1)
             # 计算与真值平均误差最小的预测值
-            gt = futures.unsqueeze(1).repeat(1, config['num_modes'], 1, 1)
-            dist = torch.sqrt(torch.sum((preds - gt) ** 2, dim=-1)) # [B num_modes pred_len]
-            ade = torch.mean(dist, dim=-1) # [B num_modes]
+            gt = futures.unsqueeze(1).repeat(1, init_traj.shape[1], 1, 1)
+            dist = torch.sqrt(torch.sum((init_traj - gt) ** 2, dim=-1)) # [B num_init_trajs pred_len]
+            ade = torch.mean(dist, dim=-1) # [B num_init_trajs]
             min_ade, min_idx = torch.min(ade, dim=1) # [B], [B]
             best_preds = preds[torch.arange(preds.size(0)), min_idx] # [B pred_len in_size]
             best_scores = scores[torch.arange(scores.size(0)), min_idx] # [B]
@@ -102,12 +106,12 @@ if __name__ == "__main__":
             data_batch = [tensor.cuda() for tensor in data_batch]
             obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats = data_batch
             with torch.no_grad():
-                preds, scores = model(obs, neis, nei_masks, self_labels, nei_labels)
+                preds, scores, _ = model(obs, neis, nei_masks, self_labels, nei_labels)
                 scores = F.softmax(scores, dim=-1)
                 topK_scores, topK_indices = torch.topk(scores, config['val_topK'], dim=-1) # [B topK], [B topK]
                 topK_preds = torch.gather(preds, 1, topK_indices.unsqueeze(-1).unsqueeze(-1).repeat(1, 1, preds.size(-2), preds.size(-1))) # [B topK pred_len in_size]
                 gt = futures.unsqueeze(1).repeat(1, config['val_topK'], 1, 1)
-                dist = torch.sqrt(torch.sum((topK_preds - gt) ** 2, dim=-1)) # [B num_modes pred_len]
+                dist = torch.sqrt(torch.sum((topK_preds - gt) ** 2, dim=-1)) # [B num_init_trajs pred_len]
                 ade = torch.mean(dist, dim=-1) # [B topK]
                 fde = dist[:, :, -1] # [B topK]
                 min_ade, min_ade_idx = torch.min(ade, dim=1) # [B], [B]

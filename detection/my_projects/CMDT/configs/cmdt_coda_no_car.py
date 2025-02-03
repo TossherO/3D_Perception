@@ -3,7 +3,7 @@ custom_imports = dict(
     imports=['my_projects.CMDT.cmdt', 'my_projects.datasets'], allow_failed_imports=False)
 
 # optimizer
-lr = 0.00014 / 2
+lr = 0.00014 / 4
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=lr, weight_decay=0.01),
@@ -62,7 +62,7 @@ test_cfg = dict()
 auto_scale_lr = dict(enable=False, base_batch_size=16)
 
 # dataset settings
-point_cloud_range = [0, -9.6, -1.5, 14.4, 9.6, 4.5]
+point_cloud_range = [-21.0, -21.0, -1.5, 21.0, 21.0, 4.5]
 # class_names=[
 #     #DynamicClasses
 #     "Car", "Pedestrian", "Bike", "Motorcycle", "Golf Cart", #Unused
@@ -98,8 +98,8 @@ backend_args = None
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[57.375, 57.120, 58.395], to_rgb=False)
 ida_aug_conf = {
-        "resize_lim": (0.4, 0.5),
-        "final_dim": (480, 640),
+        "resize_lim": (0.5, 0.625),
+        "final_dim": (640, 800),
         "bot_pct_lim": (0.0, 0.0),
         "rot_lim": (0.0, 0.0),
         "H": 1024,
@@ -158,7 +158,8 @@ train_pipeline = [
         translation_std=[0.5, 0.5, 0.5]),
     dict(
         type='CustomRandomFlip3D',
-        flip_ratio_bev_horizontal=0.5),
+        flip_ratio_bev_horizontal=0.5,
+        flip_ratio_bev_vertical=0.5),
     dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
     dict(type='ObjectNameFilter', classes=class_names),
@@ -211,7 +212,7 @@ test_pipeline = [
 
 # dataloader
 train_dataloader = dict(
-    batch_size=8,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -220,7 +221,7 @@ train_dataloader = dict(
         dataset=dict(
             type=dataset_type,
             data_root=data_root,
-            ann_file='coda_16lines_infos_train.pkl',
+            ann_file='coda_no_car_infos_train.pkl',
             pipeline=train_pipeline,
             metainfo=metainfo,
             modality=input_modality,
@@ -231,7 +232,7 @@ train_dataloader = dict(
             # and box_type_3d='Depth' in sunrgbd and scannet dataset.
             box_type_3d='LiDAR')))
 val_dataloader = dict(
-    batch_size=8,
+    batch_size=4,
     num_workers=4,
     persistent_workers=True,
     drop_last=False,
@@ -239,7 +240,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='coda_16lines_infos_val.pkl',
+        ann_file='coda_no_car_infos_val.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -256,7 +257,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='coda_16lines_infos_test.pkl',
+        ann_file='coda_no_car_infos_test.pkl',
         pipeline=test_pipeline,
         metainfo=metainfo,
         modality=input_modality,
@@ -268,12 +269,12 @@ test_dataloader = dict(
 # evaluator
 val_evaluator = dict(
     type='CodaMetric',
-    ann_file=data_root + 'coda_16lines_infos_val.pkl',
+    ann_file=data_root + 'coda_no_car_infos_val.pkl',
     metric='bbox',
     backend_args=backend_args)
 test_evaluator = dict(
     type='CodaMetric',
-    ann_file=data_root + 'coda_16lines_infos_test.pkl',
+    ann_file=data_root + 'coda_no_car_infos_test.pkl',
     metric='bbox',
     backend_args=backend_args)
 
@@ -312,6 +313,9 @@ model = dict(
         voxel_size=voxel_size,
         max_voxels=(120000, 160000),
         point_cloud_range=point_cloud_range),
+    # pts_voxel_encoder=dict(
+    #     type='HardSimpleVFE',
+    #     num_features=4),
     pts_voxel_encoder=dict(
         type='HardVFE',
         in_channels=4,
@@ -325,7 +329,7 @@ model = dict(
     pts_middle_encoder=dict(
         type='SparseEncoder',
         in_channels=16,
-        sparse_shape=[41, 192, 256],
+        sparse_shape=[41, 560, 560],
         output_channels=128,
         order=('conv', 'norm', 'act'),
         encoder_channels=((16, 16, 32), (32, 32, 64), (64, 64, 128), (128, 128)),
@@ -349,7 +353,7 @@ model = dict(
         use_conv_for_no_stride=True),
     pts_bbox_head=dict(
         type='CmdtHead',
-        num_query=150,
+        num_query=500,
         in_channels=512,
         hidden_dim=256,
         downsample_scale=8,
@@ -357,9 +361,9 @@ model = dict(
         task=dict(num_class=len(class_names), class_names=class_names),
         bbox_coder=dict(
             type='NMSFreeBBoxCoder',
-            post_center_range=[-5.0, -15.0, -2.5, 20.0, 15.0, 5.5],
+            post_center_range=[-30.0, -30.0, -2.5, 30.0, 30.0, 5.5],
             pc_range=point_cloud_range,
-            max_num=50,
+            max_num=100,
             nms_radius=None,
             score_threshold=0.1,
             voxel_size=voxel_size,
@@ -414,7 +418,7 @@ model = dict(
             pos_weight=-1,
             gaussian_overlap=0.1,
             min_radius=2,
-            grid_size=[192, 256, 40],  # [x_len, y_len, 1]
+            grid_size=[560, 560, 40],  # [x_len, y_len, 1]
             voxel_size=voxel_size,
             out_size_factor=out_size_factor,
             code_weights=[2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
@@ -432,7 +436,6 @@ default_hooks = dict(
         change_args=[None, None, None])
     )
 
-# load_from='ckpts/pretrain/nuim_r50.pth'
-load_from='work_dirs/cmdt_coda_no_car/epoch_29.pth'
+load_from='ckpts/pretrain/nuim_r50.pth'
 
 # resume = True

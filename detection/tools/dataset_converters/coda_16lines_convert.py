@@ -32,5 +32,6 @@ for split in ['train', 'val', 'test']:
             new_data_list.append(data)
             
     info['data_list'] = new_data_list
+    info['metainfo']['categories'] = {'Pedestrian': 0, 'Cyclist': 1}
     save_path = './data/CODA/coda_16lines_infos_{}.pkl'.format(split)
     mmengine.dump(info, save_path)

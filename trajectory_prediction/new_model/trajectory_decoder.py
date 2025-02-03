@@ -3,29 +3,35 @@ import torch.nn as nn
 import math
 from torch.nn import functional as F
 
+
 class Decoder(nn.Module):
 
-    def __init__(self, num_class, in_size, pred_len, embed_size, num_layers, 
+    def __init__(self, num_class, in_size, pred_len, embed_size, num_layers, pred_single,
                  head=4, blocks=[['self', 'cross'], ['self', 'cross']]):
         super(Decoder, self).__init__()
         self.num_class = num_class
         self.in_size = in_size
         self.pred_len = pred_len
-        self.decoderLayers = nn.ModuleList([DecoderLayer(embed_size, head, blocks[i]) for i in range(num_layers)])
-        self.pred_head = nn.ModuleList([nn.Linear(embed_size, in_size*pred_len) for _ in range(num_class)])
-        self.socre_head = nn.ModuleList([nn.Linear(embed_size, 1) for _ in range(num_class)])
+        self.pred_single = pred_single
+        self.decoderLayers = nn.ModuleList([DecoderLayer(embed_size, head, blocks[0]) for _ in range(num_layers)])
+        if pred_single:
+            self.pred_head = nn.Linear(embed_size, in_size*pred_len)
+            self.socre_head = nn.Linear(embed_size, 1)
+        else:
+            self.pred_head = nn.ModuleList([nn.Linear(embed_size, in_size*pred_len) for _ in range(num_class)])
+            self.socre_head = nn.ModuleList([nn.Linear(embed_size, 1) for _ in range(num_class)])
 
     def forward(self, x, nei_feats, nei_masks, self_labels):
         '''
         Args:
-            x: [B num_modes embed_size]
+            x: [B num_init_trajs embed_size]
             nei_feats: [B N embed_size]
             nei_masks: [B N]
             self_labels: [B]
 
         Return:
-            pred [B num_modes pred_len in_size]
-            scores [B num_modes]
+            pred [B num_init_trajs pred_len in_size]
+            scores [B num_init_trajs]
         '''
         B = x.shape[0]
         K = x.shape[1]
@@ -37,10 +43,14 @@ class Decoder(nn.Module):
         # prediction and score
         preds = torch.zeros(B, K, self.pred_len, self.in_size).to(x.device)
         scores = torch.zeros(B, K).to(x.device)
-        for i in range(self.num_class):
-            mask = self_labels == i
-            preds[mask] = self.pred_head[i](x[mask]).reshape(-1, K, self.pred_len, self.in_size)
-            scores[mask] = self.socre_head[i](x[mask]).squeeze(-1)
+        if self.pred_single:
+            preds = self.pred_head(x).reshape(-1, K, self.pred_len, self.in_size)
+            scores = self.socre_head(x).squeeze(-1)
+        else:
+            for i in range(self.num_class):
+                mask = self_labels == i
+                preds[mask] = self.pred_head[i](x[mask]).reshape(-1, K, self.pred_len, self.in_size)
+                scores[mask] = self.socre_head[i](x[mask]).squeeze(-1)
         return preds, scores
 
 
@@ -55,12 +65,12 @@ class DecoderLayer(nn.Module):
     def forward(self, x, nei_feats, nei_masks):
         '''
         Args:
-            x: [B num_modes embed_size]
+            x: [B num_init_trajs embed_size]
             nei_feats: [B N embed_size]
             nei_masks: [B N]
 
         Return:
-            x [B num_modes embed_size]
+            x [B num_init_trajs embed_size]
         '''
         for i, block in enumerate(self.blocks):
             if block == 'self':
