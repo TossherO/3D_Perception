@@ -56,9 +56,9 @@ def iou_rotated_2d(box3d1, box3d2):
     return iou
 
 
-data_info = mmengine.load('./data/CODA/coda_infos_val.pkl')
-detection_results = mmengine.load('./data/CODA/detection_results.pkl')
-config_path = './configs/coda_configs/giou.yaml'
+data_info = mmengine.load('./data/CODA/coda_infos_val_full.pkl')
+detection_results = mmengine.load('./data/CODA/coda_cmdt_detection_results.pkl')
+config_path = './configs/coda_configs/diou.yaml'
 save_path = './work_dirs/' + time.strftime('%Y%m%d%H%M%S', time.localtime()) + '/'
 configs = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)
 point_cloud_range = [-21.0, -21.0, -2.0, 21.0, 21.0, 6.0]
@@ -106,7 +106,7 @@ for i, data in enumerate(data_info['data_list']):
 
 all_results.append(sequence_results)
 print('Processing scene %s end at frame %s (%d / %d)' % (scene, frame, i+1, len(data_info['data_list'])))
-mmengine.dump(all_results, save_path + 'coda_track_results.pkl')
+mmengine.dump(all_results, save_path + 'coda_track_results_full.pkl')
 
 # eval
 tracks_list = [[] for _ in labels]

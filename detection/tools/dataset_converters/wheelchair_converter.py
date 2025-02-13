@@ -24,9 +24,9 @@ def create_wheelchair_infos_split(root_path,
         'split': split}
     
     calib0 = json.load(open(os.path.join(root_path, 'calib.json')))[0]
-    K = np.array([calib0['camera_internal']['fx'], 0, calib0['camera_internal']['cx']],
+    K = np.array([[calib0['camera_internal']['fx'], 0, calib0['camera_internal']['cx']],
                     [0, calib0['camera_internal']['fy'], calib0['camera_internal']['cy']],
-                    [0, 0, 1])
+                    [0, 0, 1]])
     dist = np.array([calib0['distortionK'][0], calib0['distortionK'][1], calib0['distortionP'][0], calib0['distortionP'][1]])
     cam2img, _ = cv2.getOptimalNewCameraMatrix(K, dist, (calib0['width'], calib0['height']), 1, (calib0['width'], calib0['height']))
     lidar2cam = np.array(calib0['camera_external']).reshape(4, 4)
@@ -50,10 +50,10 @@ def create_wheelchair_infos_split(root_path,
             data['sequence'] = sequence_idx
             data['frame'] = frame['idx']
             data['sample_idx'] = count
-            data['token'] = f'{scene_idx}_{frame['idx']}'
+            data['token'] = f"{scene_idx}_{frame['idx']}"
             data['lidar_points'] = {
                 'num_pts_feats': 4,
-                'lidar_path': os.path.join(f'scene{scene_idx}', 'lidar_point_cloud_0', '%04d.pcd' % frame['idx'])}
+                'lidar_path': os.path.join(f'scene{scene_idx}', 'lidar_point_cloud_0', '%04d.bin' % frame['idx'])}
             
             cam0 = {}
             cam0['img_path'] = os.path.join(f'scene{scene_idx}', 'camera_image_0', '%04d.png' % frame['idx'])
@@ -66,11 +66,12 @@ def create_wheelchair_infos_split(root_path,
             for instance in frame['instances']:
                 if instance['label'] not in BBOX_CLASS_TO_ID:
                     continue
-                instance = {}
-                instance['bbox_label_3d'] = BBOX_CLASS_TO_ID[instance['label']]
-                instance['bbox_3d'] = instance['bbox']
-                instance['instance_id'] = instance['id']
-                instances.append(instance)
+                _instance = {}
+                _instance['bbox_label_3d'] = BBOX_CLASS_TO_ID[instance['label']]
+                _instance['bbox_3d'] = instance['bbox']
+                _instance['instance_id'] = instance['id']
+                _instance['is_occluded'] = None
+                instances.append(_instance)
             data['instances'] = instances
             
             data_list.append(data)

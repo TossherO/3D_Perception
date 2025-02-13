@@ -1,122 +1,99 @@
-from torch.utils import data
 import numpy as np
 import torch
-import pickle
+import mmengine
+from torch.utils.data import Dataset
 
 
-class TrajectoryDataset(data.Dataset):
+class TrajectoryDataset(Dataset):
 
-    def __init__(self, dataset_path, dataset_name, dataset_type, translation=False, rotation=False, scaling=False, obs_len=8,
-                max_neis_num=50, dist_threshold=2, smooth=False):
-        
+    def __init__(self, dataset_path, dataset_name, split, single_perd_label=-1, class_balance=False, translation=True, rotation=True):
         self.translation = translation
         self.rotation = rotation
-        self.obs_len = obs_len
-        self.scaling = scaling
-        self.max_neis_num = max_neis_num
-        self.dist_threshold = dist_threshold
-        self.smooth = smooth
-        self.window_size = 3
+        data_path = dataset_path + dataset_name + '_traj_' + split + '.pkl'
+        self.data_list = mmengine.load(data_path)
+        if single_perd_label >= 0:
+            self.data_list = [data for data in self.data_list if data['label'] == single_perd_label]
+        elif class_balance:
+            self.data_list = self.balance_data()
 
-        f = open(dataset_path + dataset_name + '_' + dataset_type + '.pkl', 'rb+')
-        self.scenario_list = pickle.load(f)
-        f.close()
-
-
-    def coll_fn(self, scenario_list):
-
-        # batch <list> [[ped, neis]]]
-        ped, neis = [], []
-
-        n_neighbors = []
-
-        for item in scenario_list:  
-            ped_obs_traj, ped_pred_traj, neis_traj = item[0], item[1], item[2] # [T 2] [N T 2] N is not a fixed number
-            ped_traj = np.concatenate((ped_obs_traj, ped_pred_traj), axis=0)
-            # neis_traj = neis_traj[:, :, :2].transpose(1, 0, 2)
-            # if neis_traj.shape[0] == 0:
-            #     neis_traj = np.expand_dims(ped_obs_traj, axis=0)
-            # else:
-            #     neis_traj = np.concatenate((np.expand_dims(ped_obs_traj, axis=0), neis_traj), axis=0)
-            if neis_traj.shape[0] != 0:
-                distance_mask = neis_traj[:, :, 0] > 1e8
-                distance = np.linalg.norm(np.expand_dims(ped_obs_traj, axis=0) - neis_traj, axis=-1)
-                # distance = np.mean(distance, axis=-1) # mean distance
-                distance[distance_mask] = 1e9
-                distance = np.min(distance, axis=-1) # min distance
-                # distance = distance[:, -1] # final distance
-                neis_traj = neis_traj[distance < self.dist_threshold]
-
-            n_neighbors.append(neis_traj.shape[0])
+    def collate_fn(self, data_batch):
+        batch_size = len(data_batch)
+        obs_len = data_batch[0]['ob'].shape[0]
+        obs = []
+        futures = []
+        neis_ = []
+        num_neis = []
+        self_labels = []
+        nei_labels_ = []
+        refs = []
+        rot_mats = []
+        for data in data_batch:
+            traj = np.concatenate((data['ob'], data['future']), axis=0)
+            nei = data['nei']
             if self.translation:
-                origin = ped_traj[self.obs_len-1:self.obs_len] # [1, 2]
-                ped_traj = ped_traj - origin
-                if neis_traj.shape[0] != 0:
-                    neis_traj = neis_traj - np.expand_dims(origin, axis=0) 
-            
-            if self.rotation:
-                for i in range(self.obs_len):
-                    if ped_traj[i][0] < 1e8:
-                        ref_point = ped_traj[i]
-                        break
-                angle = np.arctan2(ref_point[1], ref_point[0])
-                rot_mat = np.array([[np.cos(angle), -np.sin(angle)],
-                                          [np.sin(angle), np.cos(angle)]])
-                ped_traj = np.matmul(ped_traj, rot_mat)
-                if neis_traj.shape[0] != 0:
-                    rot_mat = np.expand_dims(rot_mat, axis=0)
-                    rot_mat = np.repeat(rot_mat, neis_traj.shape[0], axis=0)
-                    neis_traj = np.matmul(neis_traj, rot_mat)
-
-            if self.smooth:
-                pred_traj = ped_traj[self.obs_len:]
-                x_len = pred_traj.shape[0]
-                x_list = []
-                keep_num = int(np.floor(self.window_size / 2))
-                for i in range(self.window_size):
-                    x_list.append(pred_traj[i:x_len-self.window_size+1+i])
-                x = sum(x_list) / self.window_size
-                x = np.concatenate((pred_traj[:keep_num], x, pred_traj[-keep_num:]), axis=0)
-                ped_traj = np.concatenate((ped_traj[:self.obs_len], x), axis=0)
-
-            # if self.scaling:
-            #     scale = np.random.randn(ped_traj.shape[0])*0.05+1
-            #     scale = scale.reshape(ped_traj.shape[0], 1)
-            #     ped_traj = ped_traj * scale
-            #     if neis_traj.shape[0] != 0:
-            #         neis_traj = neis_traj * scale
-            
-            ped.append(ped_traj)
-            neis.append(neis_traj)
-            
-        max_neighbors = max(n_neighbors)
-        if max_neighbors == 0:
-            max_neighbors = 1
-        neis_pad = []
-        neis_mask = []
-        for neighbor, n in zip(neis, n_neighbors):
-            if n == 0:
-                neis_pad.append(np.zeros((max_neighbors, self.obs_len, 2)))
+                ref = traj[obs_len-1:obs_len]
+                traj = traj - ref
+                if nei.shape[0] != 0:
+                    nei = nei - ref
+                if self.rotation:
+                    angle = np.arctan2(traj[0][1], traj[0][0])
+                    rot_mat = np.array([[np.cos(angle), -np.sin(angle)], 
+                                        [np.sin(angle), np.cos(angle)]])
+                    traj = np.dot(traj, rot_mat)
+                    if nei.shape[0] != 0:
+                        nei = np.dot(nei, rot_mat)
+                else:
+                    rot_mat = np.array([[1, 0], [0, 1]])
             else:
-                neis_pad.append(
-                    np.pad(neighbor, ((0, max_neighbors-n), (0, 0),  (0, 0)), "constant")
-                )
-            mask = np.zeros((max_neighbors, max_neighbors))
-            mask[:n, :n] = 1
-            neis_mask.append(mask)
+                ref = np.array([0, 0])
+                rot_mat = np.array([[1, 0], [0, 1]])
+            
+            obs.append(traj[:obs_len])
+            futures.append(traj[obs_len:])
+            neis_.append(nei)
+            num_neis.append(nei.shape[0])
+            self_labels.append(data['label'])
+            nei_labels_.append(data['nei_label'])
+            refs.append(ref.flatten())
+            rot_mats.append(rot_mat)
 
-        ped = np.stack(ped, axis=0) 
-        neis = np.stack(neis_pad, axis=0)
-        neis_mask = np.stack(neis_mask, axis=0)
-
-        ped = torch.tensor(ped, dtype=torch.float32)
-        neis = torch.tensor(neis, dtype=torch.float32)
-        neis_mask = torch.tensor(neis_mask, dtype=torch.int32)
-        return ped, neis, neis_mask
+        max_num_nei = max(num_neis)
+        if max_num_nei == 0:
+            max_num_nei = 1
+        nei_masks = torch.zeros(batch_size, max_num_nei, dtype=torch.bool)
+        neis = torch.zeros(batch_size, max_num_nei, obs_len, 2)
+        nei_labels = torch.zeros(batch_size, max_num_nei, dtype=torch.int32) - 1
+        for i in range(batch_size):
+            nei_masks[i, :num_neis[i]] = True
+            neis[i, :num_neis[i]] = torch.tensor(neis_[i])
+            nei_labels[i, :num_neis[i]] = torch.tensor(nei_labels_[i])
         
+        obs = torch.tensor(np.stack(obs, axis=0), dtype=torch.float32)
+        futures = torch.tensor(np.stack(futures, axis=0), dtype=torch.float32)
+        self_labels = torch.tensor(self_labels, dtype=torch.int32)
+        refs = torch.tensor(np.stack(refs, axis=0), dtype=torch.float32)
+        rot_mats = torch.tensor(np.stack(rot_mats, axis=0), dtype=torch.float32)
+        return obs, futures, neis, nei_masks, self_labels, nei_labels, refs, rot_mats
+
+    def balance_data(self):
+        class_data_dict = {}
+        for data in self.data_list:
+            label = data['label']
+            if label not in class_data_dict:
+                class_data_dict[label] = []
+            class_data_dict[label].append(data)
+        max_num = max([len(class_data_dict[label]) for label in class_data_dict])
+        new_data_list = []
+        for label in class_data_dict:
+            class_data = class_data_dict[label]
+            num = len(class_data)
+            if num <= max_num:
+                new_data_list += class_data * (max_num // num)
+            new_data_list += class_data[:max_num % num]
+        return new_data_list
 
     def __len__(self):
-        return  len(self.scenario_list)
-
-    def __getitem__(self, item):
-        return self.scenario_list[item]
+        return len(self.data_list)
+    
+    def __getitem__(self, idx):
+        return self.data_list[idx]

@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataset import TrajectoryDataset
-from new_model.model import TrajectoryModel
+from model.model import TrajectoryModel
 
 
 def options():

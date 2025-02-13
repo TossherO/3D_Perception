@@ -32,7 +32,7 @@ BBOX_CLASS_TO_ID = {
 def options():
     parser = argparse.ArgumentParser(description='CODA converting ...')
     parser.add_argument('--root_path',type=str,default='./data/CODA/')
-    parser.add_argument('--split',type=str,default='split2.json')
+    parser.add_argument('--split',type=str,default='split.json')
     parser.add_argument('--config',type=str,default='./configs/coda.yaml')
     args = parser.parse_args()
     return args
@@ -47,30 +47,27 @@ def data_preprocess(tracks, config):
     all_label_ids = list(tracks.keys())
     all_labels = np.array([int(label_id.split('_')[0]) for label_id in all_label_ids])
     all_tracks = np.array([tracks[k]['data'] for k in all_label_ids])
+    result_tracks = []
+    result_labels = []
 
     for i in range(len(all_tracks)):
         if all_tracks[i][-1][0] > 1e8 or all_tracks[i][obs_len-2][0] > 1e8 or all_labels[i] == 3:
             continue
-        ob = all_tracks[i].copy()
+        now_track = all_tracks[i].copy()
         for j in range(obs_len - 2, -1, -1):
-            if ob[j][0] > 1e8:
-                ob[j] = ob[j+1]
+            if now_track[j][0] > 1e8:
+                now_track[j] = now_track[j+1]
         max_step = 0
         for j in range(1, obs_len + pred_len):
-            max_step = max(max_step, np.sqrt(np.sum((ob[j] - ob[j-1])**2)))
+            max_step = max(max_step, np.sqrt(np.sum((now_track[j] - now_track[j-1])**2)))
         if max_step > 2:
             continue
-        nei = all_tracks[np.arange(len(all_tracks)) != i, :obs_len]
-        nei_labels = all_labels[np.arange(len(all_labels)) != i]
-        now_nei_radius = [nei_radius[label] for label in nei_labels]
-        dist_threshold = np.maximum(nei_radius[all_labels[i]], now_nei_radius)
-        dist = np.linalg.norm(ob[:obs_len].reshape(1, obs_len, 2) - nei, axis=-1)
-        dist = np.min(dist, axis=-1)
-        nei = nei[dist < dist_threshold]
-        nei_labels = nei_labels[dist < dist_threshold]
-        data_list.append({'ob': ob[:obs_len], 'nei': nei, 'future': ob[obs_len:],
-                            'label': all_labels[i], 'nei_label': nei_labels})
-    return data_list
+        result_tracks.append(now_track)
+        result_labels.append(all_labels[i])
+        
+    result_tracks = np.array(result_tracks)
+    result_labels = np.array(result_labels)
+    return (result_tracks, result_labels)
 
 
 def update_tracks(tracks, labels, ids, xys, config):
@@ -82,7 +79,8 @@ def update_tracks(tracks, labels, ids, xys, config):
         label_id = str(labels[i]) + '_' + str(ids[i])
         if tracks.get(label_id) is None:
             tracks[label_id] = {
-                'data': [[1e9, 1e9] for _ in range(obs_len + pred_len - 1)] + [xys[i].tolist()], 'label': labels[i], 
+                'data': [[1e9, 1e9] for _ in range(obs_len + pred_len - 1)] + [xys[i].tolist()],
+                'label': labels[i], 
                 'lost_frame': 0}
         else:
             tracks[label_id]['data'].pop(0)
@@ -141,7 +139,8 @@ def create_trajecotry_split(root_path, split_meta, config, split):
 
             update_tracks(tracks, update_labels, update_ids, update_xys, config)
             new_data = data_preprocess(tracks, config)
-            data_list += new_data
+            if len(new_data[0]) > 0:
+                data_list.append(new_data)
         print(f'Scene {scene_idx} frame {frame_list[0]}_{frame_list[-1]} done!')
 
     save_path = os.path.join(root_path, f'coda_traj_{split}.pkl')

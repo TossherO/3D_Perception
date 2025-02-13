@@ -10,9 +10,9 @@ import numpy as np
 import torch
 import mmcv
 import cv2
+import open3d as o3d
 from mmdet3d.registry import TRANSFORMS
 from mmcv.transforms import BaseTransform
-from PIL import Image
 from mmdet3d.datasets.transforms import LoadMultiViewImageFromFiles
 from mmcv.transforms import LoadImageFromFile
 from typing import Optional, Union

@@ -78,12 +78,12 @@ backend_args = None
 img_norm_cfg = dict(
     mean=[103.530, 116.280, 123.675], std=[57.375, 57.120, 58.395], to_rgb=False)
 ida_aug_conf = {
-        "resize_lim": (0.4, 0.5),
+        "resize_lim": (0.8, 1.0),
         "final_dim": (480, 640),
         "bot_pct_lim": (0.0, 0.0),
         "rot_lim": (0.0, 0.0),
-        "H": 1024,
-        "W": 1224,
+        "H": 480,
+        "W": 640,
         "rand_flip": True,
     }
 db_sampler=dict(
@@ -111,7 +111,7 @@ db_sampler=dict(
 # pipeline
 train_pipeline = [
     dict(
-        type='LoadPointsFromPcdFile',
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=4,
         use_dim=[0, 1, 2, 3],
@@ -158,7 +158,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(
-        type='LoadPointsFromPcdFile',
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=4,
         use_dim=[0, 1, 2, 3],
@@ -403,7 +403,7 @@ model = dict(
 
 # hooks
 default_hooks = dict(
-    logger=dict(type='LoggerHook', interval=50),
+    logger=dict(type='LoggerHook', interval=20),
     checkpoint=dict(type='CheckpointHook', interval=1),
     changestrategy=dict(
         type='ChangeStrategyHook',
