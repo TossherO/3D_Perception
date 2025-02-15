@@ -27,7 +27,7 @@ def options():
     parser.add_argument('--num_works', type=int, default=4)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--gpu', type=str, default='0')
-    parser.add_argument('--checkpoint', type=str, default='./checkpoint/')
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/')
     args = parser.parse_args()
     return args
 

@@ -25,7 +25,7 @@ def options():
     parser.add_argument('--single_pred_label', type=int, default=-1)
     parser.add_argument('--num_works', type=int, default=4)
     parser.add_argument('--gpu', type=str, default='0')
-    parser.add_argument('--checkpoint', type=str, default='./checkpoint/coda_best.pth')
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/coda_best.pth')
     args = parser.parse_args()
     return args
 

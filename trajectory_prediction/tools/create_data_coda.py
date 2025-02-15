@@ -32,7 +32,7 @@ BBOX_CLASS_TO_ID = {
 def options():
     parser = argparse.ArgumentParser(description='CODA converting ...')
     parser.add_argument('--root_path',type=str,default='./data/CODA/')
-    parser.add_argument('--split',type=str,default='split2.json')
+    parser.add_argument('--split',type=str,default='split.json')
     parser.add_argument('--config',type=str,default='./configs/coda.yaml')
     args = parser.parse_args()
     return args

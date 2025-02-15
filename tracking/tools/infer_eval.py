@@ -106,7 +106,7 @@ for i, data in enumerate(data_info['data_list']):
 
 all_results.append(sequence_results)
 print('Processing scene %s end at frame %s (%d / %d)' % (scene, frame, i+1, len(data_info['data_list'])))
-mmengine.dump(all_results, save_path + 'coda_track_results_full.pkl')
+mmengine.dump(all_results, save_path + 'coda_track_results.pkl')
 
 # eval
 tracks_list = [[] for _ in labels]

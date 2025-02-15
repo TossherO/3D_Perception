@@ -2,7 +2,7 @@ __pycache__
 cmd
 data
 work_dirs
-*.pth
+ckpts
 unused*
 fig
 *.so

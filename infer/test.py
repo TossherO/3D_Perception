@@ -35,9 +35,11 @@ def data_preprocess(tracks, config):
     nei_labels_ = []
     refs = []
     rot_mats = []
+    bboxes = []
     all_label_ids = list(tracks.keys())
     all_labels = np.array([int(label_id.split('_')[0]) for label_id in all_label_ids])
     all_tracks = np.array([tracks[k]['data'] for k in all_label_ids])
+    all_bboxes = np.array([tracks[k]['bbox'] for k in all_label_ids])
 
     for i in range(len(all_tracks)):
         if all_tracks[i][-1][0] > 1e8 or all_tracks[i][obs_len-2][0] > 1e8 or all_labels[i] == 3:
@@ -73,6 +75,7 @@ def data_preprocess(tracks, config):
         nei_labels_.append(nei_labels)
         refs.append(ref.flatten())
         rot_mats.append(rot_mat)
+        bboxes.append(all_bboxes[i])
         
     if len(obs) == 0:
         return None
@@ -92,10 +95,11 @@ def data_preprocess(tracks, config):
     self_labels = torch.tensor(self_labels, dtype=torch.int32)
     refs = torch.tensor(np.stack(refs, axis=0), dtype=torch.float32)
     rot_mats = torch.tensor(np.stack(rot_mats, axis=0), dtype=torch.float32)
-    return obs, neis, nei_masks, self_labels, nei_labels, refs, rot_mats
+    bboxes = torch.tensor(np.stack(bboxes, axis=0), dtype=torch.float32)
+    return obs, neis, nei_masks, self_labels, nei_labels, refs, rot_mats, bboxes
 
 
-def update_tracks(tracks, labels, ids, xys, config):
+def update_tracks(tracks, labels, ids, xys, bboxes, config):
 
     obs_len = config['obs_len']
     is_updated = {k: False for k in tracks.keys()}
@@ -104,11 +108,13 @@ def update_tracks(tracks, labels, ids, xys, config):
         if tracks.get(label_id) is None:
             tracks[label_id] = {
                 'data': [[1e9, 1e9] for _ in range(obs_len - 1)] + [xys[i].tolist()],
+                'bbox': bboxes[i],
                 'label': labels[i], 
                 'lost_frame': 0}
         else:
             tracks[label_id]['data'].pop(0)
             tracks[label_id]['data'].append(xys[i].tolist())
+            tracks[label_id]['bbox'] = bboxes[i]
             tracks[label_id]['lost_frame'] = 0
             is_updated[label_id] = True
 
@@ -125,7 +131,7 @@ def update_tracks(tracks, labels, ids, xys, config):
 
 # load detection model
 cfg = Config.fromfile('./detection/my_projects/CMDT/configs/cmdt_coda.py')
-checkpoint = './detection/ckpts/CMDT/coda.pth'
+checkpoint = './detection/ckpts/CMDT/cmdt_coda.pth'
 info_path = './detection/data/CODA/_coda_infos_val.pkl'
 register_all_modules()
 detect_model = MODELS.build(cfg.model)
@@ -220,7 +226,7 @@ while count < 100:
     update_labels = []
     update_ids = []
     update_xys = []
-    vis_bboxes = []
+    update_bboxes = []
     for i, label in enumerate(class_labels):
         for j in range(len(track_bboxes[i])):
             state = track_states[i][j].split('_')
@@ -228,16 +234,17 @@ while count < 100:
                 update_labels.append(label)
                 update_ids.append(track_ids[i][j])
                 update_xys.append(track_bboxes[i][j][:2])
-                vis_bboxes.append(track_bboxes[i][j])
+                update_bboxes.append(track_bboxes[i][j])
     update_labels.append(3)
     update_ids.append(0)
     update_xys.append(ego2global[:2, 3])
-    update_tracks(tracks, update_labels, update_ids, update_xys, traj_pred_config)
+    update_bboxes.append(np.zeros(8))
+    update_tracks(tracks, update_labels, update_ids, update_xys, update_bboxes, traj_pred_config)
     data_input = data_preprocess(tracks, traj_pred_config)
     if data_input is not None:
         with torch.no_grad():
             data_input = [tensor.cuda() for tensor in data_input]
-            obs, neis, nei_masks, self_labels, nei_labels, refs, rot_mats = data_input
+            obs, neis, nei_masks, self_labels, nei_labels, refs, rot_mats, obs_bboxes = data_input
             preds, scores, _ = traj_pred_model(obs, neis, nei_masks, self_labels, nei_labels)
             scores = torch.nn.functional.softmax(scores, dim=-1)
             topK_scores, topK_indices = torch.topk(scores, topK, dim=-1) # [B topK], [B topK]
@@ -258,7 +265,9 @@ while count < 100:
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.paint_uniform_color([1, 1, 1])
     # bboxes
-    for i, bbox in enumerate(vis_bboxes):
+    for i, bbox in enumerate(update_bboxes):
+        if i == len(update_bboxes) - 1:
+            continue
         color = label_colors[update_labels[i]]
         bbox[2] = bbox[2] + bbox[5] / 2
         bbox_geometry = o3d.geometry.OrientedBoundingBox(center=bbox[:3], extent=bbox[3:6], 
@@ -271,13 +280,14 @@ while count < 100:
     # trajectories
     if data_input is not None:
         for i in range(len(obs_ori)):
-            obs_points = np.concatenate([obs_ori[i], np.ones((obs_ori.shape[1], 1))*ego2global[2, 3]-1], axis=1)
+            h = obs_bboxes[i][2].cpu().numpy()
+            obs_points = np.concatenate([obs_ori[i], np.ones((obs_ori.shape[1], 1)) * h], axis=1)
             lines = [[j, j+1] for j in range(obs_ori.shape[1]-1)]
             line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(obs_points), lines=o3d.utility.Vector2iVector(lines))
             line_set.colors = o3d.utility.Vector3dVector([label_colors[self_labels[i]]] * len(lines))
             vis.add_geometry(line_set)
             for j in range(topK):
-                pred_points = np.concatenate([preds_ori[i, j], np.ones((preds_ori.shape[2], 1))*ego2global[2, 3]-1], axis=1)
+                pred_points = np.concatenate([preds_ori[i, j], np.ones((preds_ori.shape[2], 1)) * h], axis=1)
                 lines = [[j, j+1] for j in range(preds_ori.shape[2]-1)]
                 line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(pred_points), lines=o3d.utility.Vector2iVector(lines))
                 line_set.colors = o3d.utility.Vector3dVector([[0, 1, 1]] * len(lines))

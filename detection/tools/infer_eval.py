@@ -13,8 +13,11 @@ from mmengine.logging import print_log
 save_path = 'test/work_dirs/'
 cfg = Config.fromfile('my_projects/CMDT/configs/cmdt_coda.py')
 cfg.work_dir = osp.abspath('./test/work_dirs')
+test_info = 'coda_infos_test.pkl'
+cfg.test_dataloader.dataset.ann_file = test_info
+cfg.test_evaluator.ann_file = cfg.data_root + test_info
 runner = Runner.from_cfg(cfg)
-runner.load_checkpoint('ckpts/CMDT/coda.pth')
+runner.load_checkpoint('ckpts/CMDT/cmdt_coda.pth')
 
 sample_idxs = []
 pre_bboxes = []
@@ -50,4 +53,4 @@ results = {
     'pre_scores': pre_scores
 }
 mmengine.utils.mkdir_or_exist(save_path)
-mmengine.dump(results, save_path + 'coda_detect_results.pkl')
+mmengine.dump(results, save_path + 'coda_cmdt_detect_results.pkl')

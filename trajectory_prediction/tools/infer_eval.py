@@ -132,7 +132,7 @@ def update_tracks(tracks, labels, ids, xys, gt_ids, length):
     return tracks
 
 
-track_results = mmengine.load('./data/CODA/coda_track_results_full.pkl')
+track_results = mmengine.load('./data/CODA/coda_track_results.pkl')
 config_path = './configs/coda.yaml'
 checkpoint = './checkpoint/coda_best.pth'
 config = yaml.load(open(config_path, 'r'), Loader=yaml.FullLoader)
