@@ -1,4 +1,4 @@
-# Paper Name
+# A Lightweight Dynamic Object Detection and Trajectory Prediction Method for Mobile Robots
 
 ## 1. Get Started
 ### 1.1 Prerequisites
