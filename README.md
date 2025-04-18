@@ -1,4 +1,4 @@
-# A Lightweight Dynamic Object Detection and Trajectory Prediction Method for Mobile Robots
+# Lightweight LiDAR-Camera 3D Dynamic Object Detection and Multi-Class Trajectory Prediction
 
 ## 1. Get Started
 ### 1.1 Prerequisites
