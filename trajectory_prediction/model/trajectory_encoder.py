@@ -34,10 +34,11 @@ class Encoder(nn.Module):
         B = obs.shape[0]
         N = neis.shape[1]
         
-        if self.pred_single:
-            init_trajs = init_trajs.unsqueeze(0).repeat(B, 1, 1, 1)
-        else:
-            init_trajs = init_trajs[self_labels]
+        # if self.pred_single:
+        #     init_trajs = init_trajs.unsqueeze(0).repeat(B, 1, 1, 1)
+        # else:
+        #     init_trajs = init_trajs[self_labels]
+        init_trajs = init_trajs[self_labels]
         num_init_trajs = init_trajs.shape[1]
 
         # self embedding

@@ -42,7 +42,7 @@ def data_preprocess(tracks, config):
     all_bboxes = np.array([tracks[k]['bbox'] for k in all_label_ids])
 
     for i in range(len(all_tracks)):
-        if all_tracks[i][-1][0] > 1e8 or all_tracks[i][obs_len-2][0] > 1e8 or all_labels[i] == 3:
+        if all_tracks[i][-1][0] > 1e8 or all_tracks[i][obs_len-2][0] > 1e8 or all_labels[i] == 2:
             continue
         ob = all_tracks[i].copy()
         for j in range(obs_len - 2, -1, -1):
@@ -129,10 +129,24 @@ def update_tracks(tracks, labels, ids, xys, bboxes, config):
     return tracks
 
 
+def smooth_trajectories(trajectories, window_size=3):
+
+    # trajectories: tensor(bs, num, length, 2)
+    smoothed_trajectories = trajectories.clone()
+    for i in range(trajectories.shape[2]):
+        if i < window_size:
+            smoothed_trajectories[:, :, i] = torch.mean(trajectories[:, :, :i+window_size+1], dim=2)
+        elif i > trajectories.shape[2] - window_size - 1:
+            smoothed_trajectories[:, :, i] = torch.mean(trajectories[:, :, i-window_size:], dim=2)
+        else:
+            smoothed_trajectories[:, :, i] = torch.mean(trajectories[:, :, i-window_size:i+window_size+1], dim=2)
+    return smoothed_trajectories
+
+
 # load detection model
-cfg = Config.fromfile('./detection/my_projects/CMDT/configs/cmdt_coda.py')
-checkpoint = './detection/ckpts/CMDT/cmdt_coda.pth'
-info_path = './detection/data/CODA/coda_infos_val.pkl'
+cfg = Config.fromfile('./detection/my_projects/CMDT/configs/cmdt_wheelchair.py')
+checkpoint = './detection/ckpts/CMDT/cmdt_wheelchair.pth'
+info_path = './detection/data/Wheelchair/wheelchair_infos_val.pkl'
 register_all_modules()
 detect_model = MODELS.build(cfg.model)
 pipeline = []
@@ -144,13 +158,13 @@ detect_model.cuda().eval()
 # load tracking model
 config_path = './tracking/configs/coda_configs/diou.yaml'
 track_config = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)
-class_labels = [0, 1, 2]
-class_names = ['car', 'pedestrian', 'cyclist']
+class_labels = [0, 1]
+class_names = ['pedestrian', 'cyclist']
 trackers = [MOTModel(track_config, class_names[label]) for label in class_labels]
 
 # load trajectory prediction model
-config_path = './trajectory_prediction/configs/coda.yaml'
-checkpoint = './trajectory_prediction/checkpoints/coda_best.pth'
+config_path = './trajectory_prediction/configs/wheelchair.yaml'
+checkpoint = './trajectory_prediction/checkpoints/wheelchair_best.pth'
 traj_pred_config = yaml.load(open(config_path, 'r'), Loader=yaml.FullLoader)
 traj_pred_model = TrajectoryModel(num_class=traj_pred_config['num_class'], in_size=2, 
                 obs_len=traj_pred_config['obs_len'], pred_len=traj_pred_config['pred_len'], 
@@ -162,34 +176,42 @@ traj_pred_model.cuda().eval()
 # load data_info
 data_info = mmengine.load(info_path)
 tracks = {}
-count = 2550
+count = 200
 
 # initialize visualization
 vis = o3d.visualization.Visualizer()
-vis.create_window(width=3000, height=2000, visible=False)
+vis.create_window()
 render_option = vis.get_render_option()
 render_option.background_color = np.array([0, 0, 0])
 render_option.point_size = 1
-render_option.line_width = 5
+render_option.line_width = 2
 ctr = vis.get_view_control()
-label_colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+label_colors = [[0, 1, 0], [0, 0, 1]]
 
 # main loop
-while count < 2650:
+data_time = 0
+detect_time = 0
+track_time = 0
+traj_pred_time = 0
+while count < 250:
     
+    start_time = time.time()
     #  load data
     input = data_info['data_list'][count]
     token = input['token']
     timestamp = input['timestamp']
     ego2global = input['ego2global']
+    global2ego = np.linalg.inv(ego2global)
     path_prefix = info_path[:info_path.rfind('/')+1]
     input['lidar_points']['lidar_path'] = path_prefix + input['lidar_points']['lidar_path']
     for image in input['images'].values():
         image['img_path'] = path_prefix + image['img_path']
     input['box_type_3d'] = LiDARInstance3DBoxes
     input['box_mode_3d'] = Box3DMode.LIDAR
+    data_time += time.time() - start_time
     
     # detection
+    start_time = time.time()
     with torch.no_grad():
         for transform in pipeline:
             input = transform(input)
@@ -204,7 +226,9 @@ while count < 2650:
         bboxes_3d = bboxes_3d[scores_3d > 0.3].tensor.cpu().numpy()
         labels_3d = labels_3d[scores_3d > 0.3].cpu().numpy()
         scores_3d = scores_3d[scores_3d > 0.3].cpu().numpy()
+    detect_time += time.time() - start_time
 
+    start_time = time.time()
     # tracking
     track_labels = []
     track_ids = []
@@ -220,7 +244,9 @@ while count < 2650:
         track_ids.append([trk[1] for trk in results])
         track_bboxes.append(np.array([BBox.bbox2array(trk[0]) for trk in results]))
         track_states.append([trk[2] for trk in results])
+    track_time += time.time() - start_time
 
+    start_time = time.time()
     # trajectory prediction
     topK = 3
     update_labels = []
@@ -230,12 +256,12 @@ while count < 2650:
     for i, label in enumerate(class_labels):
         for j in range(len(track_bboxes[i])):
             state = track_states[i][j].split('_')
-            if state[0] == 'birth' or (state[0] == 'alive' and int(state[1]) == 1):
+            if state[0] == 'alive':
                 update_labels.append(label)
                 update_ids.append(track_ids[i][j])
                 update_xys.append(track_bboxes[i][j][:2])
                 update_bboxes.append(track_bboxes[i][j])
-    update_labels.append(3)
+    update_labels.append(2)
     update_ids.append(0)
     update_xys.append(ego2global[:2, 3])
     update_bboxes.append(np.zeros(8))
@@ -252,20 +278,23 @@ while count < 2650:
             rot_mats_T = rot_mats.transpose(1, 2)
             obs_ori = torch.matmul(obs, rot_mats_T) + refs.unsqueeze(1)
             preds_ori = torch.matmul(topK_preds, rot_mats_T.unsqueeze(1)) + refs.unsqueeze(1).unsqueeze(2)
+            preds_ori = smooth_trajectories(preds_ori)
             obs_ori = obs_ori.cpu().numpy()
             preds_ori = preds_ori.cpu().numpy()
+    traj_pred_time += time.time() - start_time
 
     # visualization
     vis.clear_geometries()
     # pointcloud
     pcd = o3d.geometry.PointCloud()
     points = input['inputs']['points'][0][:, :3].cpu().numpy()
-    points = np.concatenate([points, np.ones((points.shape[0], 1))], axis=1)
-    points = np.dot(ego2global, points.T).T[:, :3]
+    # points = np.concatenate([points, np.ones((points.shape[0], 1))], axis=1)
+    # points = np.dot(ego2global, points.T).T[:, :3]
     pcd.points = o3d.utility.Vector3dVector(points)
     pcd.paint_uniform_color([1, 1, 1])
     # bboxes
-    for i, bbox in enumerate(update_bboxes):
+    bboxes = np.stack([BBox.bbox2array(BBox.bbox2world(global2ego, BBox.array2bbox(bbox))) for bbox in update_bboxes])
+    for i, bbox in enumerate(bboxes):
         if i == len(update_bboxes) - 1:
             continue
         color = label_colors[update_labels[i]]
@@ -282,32 +311,40 @@ while count < 2650:
         for i in range(len(obs_ori)):
             h = obs_bboxes[i][2].cpu().numpy()
             obs_points = np.concatenate([obs_ori[i], np.ones((obs_ori.shape[1], 1)) * h], axis=1)
+            obs_points = np.dot(global2ego, np.concatenate([obs_points, np.ones((obs_points.shape[0], 1))], axis=1).T).T[:, :3]
             lines = [[j, j+1] for j in range(obs_ori.shape[1]-1)]
             line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(obs_points), lines=o3d.utility.Vector2iVector(lines))
             line_set.colors = o3d.utility.Vector3dVector([label_colors[self_labels[i]]] * len(lines))
             vis.add_geometry(line_set)
             for j in range(topK):
                 pred_points = np.concatenate([preds_ori[i, j], np.ones((preds_ori.shape[2], 1)) * h], axis=1)
-                lines = [[j, j+1] for j in range(preds_ori.shape[2]-1)]
+                pred_points = np.dot(global2ego, np.concatenate([pred_points, np.ones((pred_points.shape[0], 1))], axis=1).T).T[:, :3]
+                pred_points = np.concatenate([obs_points[-1].reshape(1, 3), pred_points], axis=0)
+                lines = [[j, j+1] for j in range(preds_ori.shape[2])]
                 line_set = o3d.geometry.LineSet(points=o3d.utility.Vector3dVector(pred_points), lines=o3d.utility.Vector2iVector(lines))
                 line_set.colors = o3d.utility.Vector3dVector([[0, 1, 1]] * len(lines))
                 vis.add_geometry(line_set)
             
     # camera view
-    ctr.set_lookat(ego2global[:3, 3])
-    ctr.set_zoom(0.3)
-    yaw = np.arctan2(ego2global[1, 0], ego2global[0, 0])
-    cam_dir = [-np.cos(yaw), -np.sin(yaw)] / np.linalg.norm([-np.cos(yaw), -np.sin(yaw)])
-    ctr.set_front([cam_dir[0], cam_dir[1], 1])
+    # ctr.set_lookat(ego2global[:3, 3])
+    # ctr.set_zoom(0.5)
+    # yaw = np.arctan2(ego2global[1, 0], ego2global[0, 0])
+    # cam_dir = [-np.cos(yaw), -np.sin(yaw)] / np.linalg.norm([-np.cos(yaw), -np.sin(yaw)])
+    # ctr.set_front([cam_dir[0], cam_dir[1], 1.5])
+    # ctr.set_up([0, 0, 1])
+    ctr.set_lookat([5, 0, 0])
+    ctr.set_zoom(0.5)
+    ctr.set_front([-1, 0, 1])
     ctr.set_up([0, 0, 1])
 
     vis.poll_events()
     vis.update_renderer()
-    
-    # save
-    if not osp.exists('./output'):
-        os.makedirs('./output')
-    vis.capture_screen_image('./output/' + str(count) + '.png', do_render=True)
+
+    vis.capture_screen_image('./infer/results/%04d.png' % count)  
     
     count += 1
 vis.destroy_window()
+print('data_time:', data_time)
+print('detect_time:', detect_time)
+print('track_time:', track_time)
+print('traj_pred_time:', traj_pred_time)

@@ -42,6 +42,7 @@ class TrajectoryModel(nn.Module):
         self.num_class = num_class
         self.encoder = Encoder(num_class, in_size, obs_len, pred_len, embed_size, pred_single)
         self.decoder = Decoder(num_class, in_size, pred_len, embed_size, num_decode_layers, pred_single)
+        self.pred_single = pred_single
         
         if init_trajs is not None:
             self.init_trajs = nn.Parameter(init_trajs)
@@ -69,4 +70,7 @@ class TrajectoryModel(nn.Module):
         '''
         x, nei_feats = self.encoder(obs, neis, self_labels, nei_labels, self.init_trajs)
         preds, scores = self.decoder(x, nei_feats, nei_masks, self_labels)
-        return preds, scores, self.init_trajs[self_labels]
+        if self.pred_single:
+            return preds, scores, self.init_trajs.unsqueeze(0).repeat(preds.shape[0], 1, 1, 1)
+        else:
+            return preds, scores, self.init_trajs[self_labels]
