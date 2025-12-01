@@ -1,4 +1,4 @@
-# Lightweight LiDAR-Camera 3D Dynamic Object Detection and Multi-Class Trajectory Prediction
+# An Efficient LiDAR-Camera Fusion Network for Multi-Class 3D Dynamic Object Detection and Trajectory Prediction
 
 ## 1. Get Started
 ### 1.1 Prerequisites
