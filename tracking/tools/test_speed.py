@@ -56,8 +56,8 @@ def iou_rotated_2d(box3d1, box3d2):
     return iou
 
 
-data_info = mmengine.load('./data/CODA/coda_infos_val.pkl')
-detection_results = mmengine.load('./data/CODA/coda_cmdt_detection_results.pkl')
+data_info = mmengine.load('./data/CODA/_coda_infos_val.pkl')
+detection_results = mmengine.load('./data/CODA/coda_unimt_detection_results.pkl')
 config_path = './configs/coda_configs/giou.yaml'
 save_path = './work_dirs/' + time.strftime('%Y%m%d%H%M%S', time.localtime()) + '/'
 configs = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)

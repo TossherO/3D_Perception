@@ -5,4 +5,8 @@ work_dirs
 ckpts
 unused*
 fig
+build
+LION*
+dist
 *.so
+*.egg-info

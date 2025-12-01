@@ -130,8 +130,8 @@ def update_tracks(tracks, labels, ids, xys, bboxes, config):
 
 
 # load detection model
-cfg = Config.fromfile('./detection/my_projects/CMDT/configs/cmdt_coda.py')
-checkpoint = './detection/ckpts/CMDT/cmdt_coda.pth'
+cfg = Config.fromfile('./detection/my_projects/UniMT/configs/unimt_coda.py')
+checkpoint = './detection/ckpts/UniMT/unimt_coda.pth'
 info_path = './detection/data/CODA/coda_infos_val.pkl'
 register_all_modules()
 detect_model = MODELS.build(cfg.model)

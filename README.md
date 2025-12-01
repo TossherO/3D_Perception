@@ -35,6 +35,13 @@ pip install filterpy
 pip install numpy==1.26.4
 ```
 
+**Step 5.**  Install Mamba
+```shell
+pip install causal-conv1d>=1.1.0
+cd detection/my_projects/UniMT/unimt/mamba
+pip install .
+```
+
 ### 1.3 CODA Dataset
 The UT Campus Object Dataset (CODa) is provided in [this paper](https://arxiv.org/pdf/2309.13549). You can download the dataset [here](https://web.corral.tacc.utexas.edu/texasrobotics/web_CODa). It's recommended to choose split/CODa_full_split.zip to be consistent with us. Once you have downloaded and decompressed the dataset, link it to the directories "\${workdir}/detection/data/CODA", "\${workdir}/tracking/data/CODA" and "\${workdir}/trajectory_prediction/data/CODA".  
 
@@ -52,8 +59,9 @@ Download [coda_info](https://drive.google.com/drive/folders/1mDJrAE1o7uuFm7XMZn1
 cd detection
 ./tools/dist_train.sh my_projects/${model}/configs/${config_file} ${gpu_num}
 ```
-* You can replace \${model} to CMDT, CMT, BEVFusion or CenterPoint, then replace \${config_file} to corresponding file that ends with "coda.py".  
-* If you want to train CMDT or CMT model, download pretrained backbone [nuim_r50.pth](https://drive.google.com/drive/folders/1PXP8glbf5VoRDix-hlE0TBfx-48icKI7?usp=sharing) at first and put it in folder "\${workdir}/detection/ckpts/pretrain".  
+* You can replace \${model} to UniMT, CMT, BEVFusion or CenterPoint, then replace \${config_file} to corresponding file that ends with "coda.py".  
+* If you want to train UniMT model, download pretrained backbone [convnextv2_nano.pth](https://drive.google.com/drive/folders/1PXP8glbf5VoRDix-hlE0TBfx-48icKI7?usp=sharing) at first and put it in folder "\${workdir}/detection/ckpts/pretrain".  
+* If you want to train CMT model, download pretrained backbone [nuim_r50.pth](https://drive.google.com/drive/folders/1PXP8glbf5VoRDix-hlE0TBfx-48icKI7?usp=sharing) at first and put it in folder "\${workdir}/detection/ckpts/pretrain".  
 * If you want to train BEVFusion model, download pretrained backbone [swin_tiny_patch4_window7_224.pth](https://drive.google.com/drive/folders/1PXP8glbf5VoRDix-hlE0TBfx-48icKI7?usp=sharing) at first and put it in folder "\${workdir}/detection/ckpts/pretrain".  
 * We train these models on two Nvidia 3090 GPUs. You may need to adjust the learing rate in \${config_file} based on the number of GPUs you are using.  
 
@@ -72,17 +80,16 @@ cd detection
 |   CenterPoint   |     75.56 %    |   52.56 %   |   60.64 %   |  62.92 %  |
 |    BEVFusion    |     79.55 %    |   54.18 %   |   63.74 %   |  65.82 %  |
 |       CMT       |     80.87 %    |   62.41 %   |   66.38 %   |  69.89 %  |
-|      CMDT       |     81.15 %    |   65.24 %   |   69.38 %   |  71.92 %  |
+|      UniMT      |     81.42 %    |   66.25 %   |   73.14 %   |  73.60 %  |
               
 ## 3. Tracking
 ### 3.1 Dataset Preparation
-You need generate detection results first. Prepare the coda_info and checkpoint of CMDT model, then run the command below.  
+You need generate detection results first. Prepare the coda_info and checkpoint of UniMT model, then run the command below.  
 ```shell
 cd detection
 python tools/infer_eval.py
 ```
-* You will get detection results file "coda_cmdt_detect_results.pkl". Then put "_coda_infos_val.pkl" and "coda_cmdt_detect_results.pkl" in folder "\${workdir}/tracking/data/CODA".  
-* If you want to get completely same results to our paper, you can directly download [coda_cmdt_detect_results.pkl](https://drive.google.com/file/d/1jabTtM--clYnxRRlyjw6pLsLPQQM1gLv/view?usp=sharing).
+* You will get detection results file "coda_unimt_detect_results.pkl". Then put "_coda_infos_val.pkl" and "coda_unimt_detect_results.pkl" in folder "\${workdir}/tracking/data/CODA".  
 
 ### 3.2 Test
 ```shell
@@ -91,16 +98,6 @@ python tools/infer_eval.py
 ```
 * With the command above, you can obtain the results of the SimpleTrack method using DIoU and GPU.  
 * If you want to test original SimpleTrack method, replace the "config_path" to './configs/coda_configs/giou.yaml' in file "\${workdir}/tracking/tools/infer_eval.py"  
-* We also implement AB3DMOT method through the code of SimpleTrack. Replace the "config_path" to './configs/coda_configs/giou_single.yaml' in file "\${workdir}/tracking/tools/infer_eval.py" to get results of AB3DMOT.  
-* The test of Fast-Poly method requires some additional code and data processing. We have not released the code at this time. If you are interested in this code, please feel free to contact me directly.  
-
-### 3.3 Tracking experiment results
-|       Methods       | MOTA(Pedestrian) |   MOTA(Car)   | MOTA(Cyclist) |    mMOTA    |
-| :-----------------: | :--------------: | :-----------: | :-----------: | :---------: |
-|   CMDT + AB3DMOT    |      61.66 %     |    49.02 %    |    49.94 %    |   53.54 %   |
-|   CMDT + FastPoly   |      61.42 %     |    45.19 %    |    46.06 %    |   50.89 %   |
-| CMDT + SimpleTrack  |      62.32 %     |    49.23 %    |    50.54 %    |   54.03 %   |
-| CMDT + SimpleTrack* |      62.38 %     |    49.67 %    |    50.42 %    |   54.16 %   |
 
 ## 4. Trajectory Prediction
 ### 4.1 Dataset Preparation
