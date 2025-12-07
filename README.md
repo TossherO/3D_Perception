@@ -74,14 +74,20 @@ cd detection
 * You can download [checkpoints](https://drive.google.com/drive/folders/1PXP8glbf5VoRDix-hlE0TBfx-48icKI7?usp=sharing) and get the same results to our paper.  
 * Due to the inherent randomness of the detection model, the results may have little difference from those in the paper.
 
-### 2.4 Detection experiment results
+### 2.4 Detection experiment results on CODa
 |     Methods     | AP(Pedestrian) |   AP(Car)   | AP(Cyclist) |    mAP    |
 | :-------------: | :------------: | :---------: | :---------: | :-------: |
 |   CenterPoint   |     75.56 %    |   52.56 %   |   60.64 %   |  62.92 %  |
 |    BEVFusion    |     79.55 %    |   54.18 %   |   63.74 %   |  65.82 %  |
 |       CMT       |     80.87 %    |   62.41 %   |   66.38 %   |  69.89 %  |
 |      UniMT      |     81.42 %    |   66.25 %   |   73.14 %   |  73.60 %  |
-              
+
+### 2.5 Detection experiment results on nuScenens
+|  Methods  |  mATE  |  mASE  |  mAOE  |  mAVE  |  mAAE  |   mAP   |   NDS   |
+| :-------: | :----: | :----: | :----: | :----: | :----: | :-----: | :-----: |
+|   UniMT   |  23.9  |  23.4  |  27.4  |  23.3  |  12.7  |   72.7  |   75.3  |
+* You can find our detailed test results at the official evaluation [address](https://evalai.s3.amazonaws.com/media/submission_files/submission_530484/67e5fa23-2b66-4547-a6ee-e285d73d750a.json).
+
 ## 3. Tracking
 ### 3.1 Dataset Preparation
 You need generate detection results first. Prepare the coda_info and checkpoint of UniMT model, then run the command below.  
