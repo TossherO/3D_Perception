@@ -1,4 +1,4 @@
-# An Efficient LiDAR-Camera Fusion Network for Multi-Class 3D Dynamic Object Detection and Trajectory Prediction [arXiv](https://arxiv.org/abs/2504.13647)
+# An Efficient LiDAR-Camera Fusion Network for Multi-Class 3D Dynamic Object Detection and Trajectory Prediction [[arXiv]](https://arxiv.org/abs/2504.13647)
 
 ## 1. Get Started
 ### 1.1 Prerequisites
