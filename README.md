@@ -1,5 +1,28 @@
 # An Efficient LiDAR-Camera Fusion Network for Multi-Class 3D Dynamic Object Detection and Trajectory Prediction [[arXiv]](https://arxiv.org/abs/2504.13647)
 
+## Demo
+We provide demonstration videos showing the performance of our method in different scenarios:
+
+### CODa Dataset
+Results on the public UT Campus Object Dataset:
+
+| Scene 1 | Scene 2 |
+|:-------:|:-------:|
+| ![CODa Scene 1](demo/gifs/coda_scene1.gif) | ![CODa Scene 2](demo/gifs/coda_scene2.gif) |
+
+| Scene 3 | Scene 4 |
+|:-------:|:-------:|
+| ![CODa Scene 3](demo/gifs/coda_scene3.gif) | ![CODa Scene 4](demo/gifs/coda_scene4.gif) |
+
+### Real-world Wheelchair
+Results deployed on a smart wheelchair:
+
+| Indoor | Outdoor |
+|:------:|:-------:|
+| ![Wheelchair Indoor](demo/gifs/wheelchair_indoor.gif) | ![Wheelchair Outdoor](demo/gifs/wheelchair_outdoor.gif) |
+
+> High-quality videos are available in [demo/coda](demo/coda/) and [demo/wheelchair](demo/wheelchair/) folders.
+
 ## 1. Get Started
 ### 1.1 Prerequisites
 Ubuntu 20.04 \
